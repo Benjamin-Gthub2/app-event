@@ -11,5 +11,6 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    host: true //le dices que acepte conexiones externas (como tu celular).
   },
 })
