@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../../services/authService';
-import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import './Login.css';
+import './Register.css';
 
 const SunIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -25,13 +23,12 @@ const MoonIcon = () => (
     </svg>
 );
 
-const Login: React.FC = () => {
+const Register: React.FC = () => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
-    const { login } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
@@ -41,11 +38,9 @@ const Login: React.FC = () => {
         setError('');
 
         try {
-            const response = await authService.login({ username, password });
-            login(response.data);
-            navigate('/dashboard');
+            navigate('/');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al iniciar sesión.');
+            setError(err instanceof Error ? err.message : 'Error al crear usuario.');
         } finally {
             setLoading(false);
         }
@@ -64,20 +59,56 @@ const Login: React.FC = () => {
                 </button>
 
                 <header className="login-header">
-                    <h2 className="login-title">Iniciar Sesión</h2>
-                    <p className="login-subtitle">Ingresa tus credenciales para acceder</p>
+                    <h2 className="login-title">Registro de Usuario</h2>
+                    <p className="login-subtitle">Ingresar credenciales</p>
                 </header>
 
                 <form onSubmit={handleSubmit} className="login-form">
                     {error && <p className="login-error">{error}</p>}
 
                     <div className="form-group">
-                        <label htmlFor="username">Usuario</label>
+                        <label htmlFor="username">DNI, CE/PASSPORT</label>
                         <input
                             id="username"
                             type="text"
                             // placeholder="ejemplo@ppln.pe"
-                            placeholder="DNI. 00000000"
+                            placeholder="00000000"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="username">Nombres</label>
+                        <input
+                            id="username"
+                            type="text"
+                            placeholder="Ingrese su nombre completo"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="username">Apellido Paterno</label>
+                        <input
+                            id="username"
+                            type="text"
+                            placeholder="Ingrese su Apellido Paterno"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="username">Apellido Materno</label>
+                        <input
+                            id="username"
+                            type="text"
+                            placeholder="Ingrese su Apellido Materno"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
@@ -89,7 +120,19 @@ const Login: React.FC = () => {
                         <input
                             id="password"
                             type="password"
-                            placeholder="••••••••"
+                            placeholder="Ingrese una contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password">Confirmar Contraseña</label>
+                        <input
+                            id="password"
+                            type="password"
+                            placeholder="Confirme su contraseña"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -97,20 +140,12 @@ const Login: React.FC = () => {
                     </div>
 
                     <button type="submit" className="login-button" disabled={loading}>
-                        {loading ? 'Cargando...' : 'Entrar'}
+                        {loading ? 'Cargando...' : 'Registrar'}
                     </button>
                 </form>
-
-                <footer className="login-footer">
-                    <a href="/register">Crear Usuario</a>
-                </footer>
-
-                <footer className="login-footer">
-                    <a href="/recuperar">¿Olvidaste tu contraseña?</a>
-                </footer>
             </div>
         </div>
     );
 };
 
-export default Login;
+export default Register;
