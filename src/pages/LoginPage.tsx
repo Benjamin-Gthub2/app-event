@@ -1,12 +1,10 @@
-import LoginForm from "../components/LoginForm";
-// import Login from "../components/login";
+import Login from "../components/Login/Login";
 import "../styles/login.css";
 
 export default function LoginPage() {
     return (
         <div className="login-container">
-            <LoginForm />
-            {/*<Login />*/}
+            <Login/>
         </div>
     );
 }
