@@ -227,3 +227,17 @@
 .login-footer a:hover {
     text-decoration: underline;
 }
+
+.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--link-color);
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.link-button:hover {
+    text-decoration: underline;
+}

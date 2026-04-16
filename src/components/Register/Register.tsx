@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import './Register.css';
 
@@ -23,14 +22,17 @@ const MoonIcon = () => (
     </svg>
 );
 
-const Register: React.FC = () => {
+interface RegisterProps {
+    onShowLogin: () => void;
+}
+
+const Register: React.FC<RegisterProps> = ({ onShowLogin }) => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
     const { theme, toggleTheme } = useTheme();
-    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,7 +40,7 @@ const Register: React.FC = () => {
         setError('');
 
         try {
-            navigate('/');
+            onShowLogin();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al crear usuario.');
         } finally {
@@ -143,6 +145,10 @@ const Register: React.FC = () => {
                         {loading ? 'Cargando...' : 'Registrar'}
                     </button>
                 </form>
+
+                <footer className="login-footer">
+                    <button type="button" className="link-button" onClick={onShowLogin}>¿Ya tienes cuenta? Inicia sesión</button>
+                </footer>
             </div>
         </div>
     );

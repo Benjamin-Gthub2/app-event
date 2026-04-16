@@ -25,7 +25,11 @@ const MoonIcon = () => (
     </svg>
 );
 
-const Login: React.FC = () => {
+interface LoginProps {
+    onShowRegister: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onShowRegister }) => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
@@ -102,7 +106,7 @@ const Login: React.FC = () => {
                 </form>
 
                 <footer className="login-footer">
-                    <a href="/register">Crear Usuario</a>
+                    <button type="button" className="link-button" onClick={onShowRegister}>Crear Usuario</button>
                 </footer>
 
                 <footer className="login-footer">
