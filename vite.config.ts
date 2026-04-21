@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    basicSsl() // Esto genera un certificado HTTPS temporal
+  ],
   server: {
     proxy: {
       '/api': {
@@ -11,6 +15,7 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    host: true //le dices que acepte conexiones externas (como tu celular).
+    host: true, // Acepta conexiones externas
+    https: true, // Fuerza el uso de HTTPS
   },
 })
