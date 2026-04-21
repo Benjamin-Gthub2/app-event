@@ -1,48 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface QrScannerProps {
-    onScan: (data: string | null) => void;
+    onScan: (data: string) => void;
+    scanKey: number;
 }
 
-const QrScanner: React.FC<QrScannerProps> = ({ onScan }) => {
+const QrScanner: React.FC<QrScannerProps> = ({ onScan, scanKey }) => {
+    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+
     useEffect(() => {
-        // Configuración del scanner
         const scanner = new Html5QrcodeScanner(
-            'reader', // ID del elemento DOM
-            { 
-                fps: 10, 
+            'reader',
+            {
+                fps: 10,
                 qrbox: { width: 250, height: 250 },
                 aspectRatio: 1.0,
                 showTorchButtonIfSupported: true,
             },
-            /* verbose= */ false
+            false,
+        );
+        scannerRef.current = scanner;
+
+        scanner.render(
+            (decodedText: string) => {
+                if (navigator.vibrate) {
+                    navigator.vibrate(150);
+                }
+                scanner.clear().catch(() => null);
+                onScan(decodedText);
+            },
+            () => null,
         );
 
-        const onScanSuccess = (decodedText: string) => {
-            onScan(decodedText);
-            // Opcional: Detener el scanner tras el primer éxito
-            // scanner.clear();
-        };
-
-        const onScanFailure = (error: any) => {
-            // Errores de escaneo (cuando no encuentra un QR en el frame actual)
-            // Se ignoran para no saturar logs
-        };
-
-        // Iniciar el renderizado
-        scanner.render(onScanSuccess, onScanFailure);
-
-        // Limpieza al desmontar el componente
         return () => {
-            scanner.clear().catch(error => console.error("Error al limpiar el scanner", error));
+            scanner.clear().catch(() => null);
         };
-    }, []);
+    }, [scanKey]);
 
     return (
         <div style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
-            {/* El ID 'reader' es crucial para que la librería encuentre el div */}
-            <div id="reader" style={{ borderRadius: '12px', overflow: 'hidden', border: 'none' }}></div>
+            <div id="reader" style={{ borderRadius: '12px', overflow: 'hidden' }} />
         </div>
     );
 };
