@@ -1,0 +1,231 @@
+/* ── Page wrapper ── */
+.qr-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
+}
+
+/* ── Scanner card ── */
+.qr-scanner-card {
+    background: #1c1c1e;
+    border-radius: 24px;
+    padding: 28px 24px 32px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.qr-scanner-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.qr-scanner-icon-wrapper {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.qr-scanner-title {
+    margin: 0 0 2px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f5f5f5;
+}
+
+.qr-scanner-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: #888;
+}
+
+/* ── Viewport ── */
+.qr-scanner-viewport {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+}
+
+/* Overrides del UI que genera html5-qrcode */
+.qr-scanner-viewport #reader {
+    border: none !important;
+    background: transparent !important;
+}
+.qr-scanner-viewport #reader__scan_region {
+    background: transparent !important;
+}
+.qr-scanner-viewport #reader__dashboard {
+    background: #111 !important;
+    padding: 8px 12px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.qr-scanner-viewport #reader__dashboard_section_swaplink,
+.qr-scanner-viewport #reader__status_span {
+    color: #aaa !important;
+    font-size: 12px !important;
+}
+.qr-scanner-viewport #reader__camera_selection {
+    background: #222 !important;
+    color: #eee !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+}
+.qr-scanner-viewport button {
+    background: #6366f1 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+}
+.qr-scanner-viewport img {
+    display: none !important;
+}
+
+/* Corner decorations */
+.qr-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: #6366f1;
+    border-style: solid;
+    z-index: 10;
+    pointer-events: none;
+}
+.qr-corner--tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.qr-corner--tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.qr-corner--bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.qr-corner--br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+.qr-scanner-hint {
+    margin: 0;
+    text-align: center;
+    font-size: 12px;
+    color: #555;
+}
+
+/* ── Result card ── */
+.qr-result-card {
+    background: #1c1c1e;
+    border-radius: 24px;
+    padding: 32px 24px;
+    max-width: 400px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.qr-result-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 24px rgba(34, 197, 94, 0.35);
+}
+
+.qr-result-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f5f5f5;
+}
+
+.qr-detail-box {
+    width: 100%;
+    background: #111;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.qr-label {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #555;
+    letter-spacing: 0.08em;
+}
+
+.qr-link {
+    color: #818cf8;
+    word-break: break-all;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.qr-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 14px;
+    gap: 12px;
+}
+.qr-row:last-child {
+    border-bottom: none;
+}
+
+.qr-key {
+    font-weight: 600;
+    color: #888;
+    flex-shrink: 0;
+}
+.qr-val {
+    color: #f0f0f0;
+    word-break: break-all;
+    text-align: right;
+}
+
+.qr-raw-text {
+    margin: 0;
+    font-size: 14px;
+    word-break: break-all;
+    color: #e0e0e0;
+    line-height: 1.6;
+}
+
+.qr-btn-back {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.qr-btn-back:hover {
+    opacity: 0.88;
+}

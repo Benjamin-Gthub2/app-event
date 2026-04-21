@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface QrScannerProps {
@@ -7,8 +7,6 @@ interface QrScannerProps {
 }
 
 const QrScanner: React.FC<QrScannerProps> = ({ onScan, scanKey }) => {
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-
     useEffect(() => {
         const scanner = new Html5QrcodeScanner(
             'reader',
@@ -20,14 +18,13 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, scanKey }) => {
             },
             false,
         );
-        scannerRef.current = scanner;
 
+        let fired = false;
         scanner.render(
             (decodedText: string) => {
-                if (navigator.vibrate) {
-                    navigator.vibrate(150);
-                }
-                scanner.clear().catch(() => null);
+                if (fired) return;
+                fired = true;
+                if (navigator.vibrate) navigator.vibrate(150);
                 onScan(decodedText);
             },
             () => null,
@@ -40,7 +37,7 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, scanKey }) => {
 
     return (
         <div style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
-            <div id="reader" style={{ borderRadius: '12px', overflow: 'hidden' }} />
+            <div id="reader" />
         </div>
     );
 };
