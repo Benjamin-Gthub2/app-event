@@ -20,9 +20,9 @@ export default function AppRouter() {
                 <Route
                     path="/qr-scanner"
                     element={
-                        // <PrivateRoute>
+                        <PrivateRoute>
                             <QrScannerPage />
-                        // </PrivateRoute>
+                        </PrivateRoute>
                     }
                 />
             </Routes>

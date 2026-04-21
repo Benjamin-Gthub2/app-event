@@ -1,22 +1,13 @@
+import { apiClient } from './apiClient';
 import type { LoginApiResponse, LoginCredentials } from '../types/auth.types';
-
-const API_BASE = '/api/v1';
 
 export const authService = {
     async login(credentials: LoginCredentials): Promise<LoginApiResponse> {
-        const response = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials),
-        });
-
-        const data: LoginApiResponse = await response.json();
-
-        if (!response.ok) {
+        try {
+            return await apiClient.post<LoginApiResponse>('/auth/login', credentials, false);
+        } catch {
             throw new Error('Credenciales incorrectas. Verifica tu usuario y contraseña.');
         }
-
-        return data;
     },
 
     saveToken(token: string): void {
