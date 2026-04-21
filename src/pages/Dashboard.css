@@ -156,12 +156,23 @@
     box-shadow: 0 8px 28px rgba(0,0,0,0.5);
 }
 
+/* En dark mode, el fondo del ícono usa el color primario con baja opacidad */
 [data-theme="dark"] .db-card-icon {
-    filter: brightness(0.85);
+    background: color-mix(in srgb, var(--card-color, #43b3c4) 18%, transparent);
 }
 
 [data-theme="dark"] .db-card:hover .db-card-icon {
+    background: var(--card-color, #43b3c4);
+    color: #ffffff;
     filter: none;
+}
+
+[data-theme="dark"] .db-card-arrow {
+    background: color-mix(in srgb, var(--card-color, #43b3c4) 18%, transparent);
+}
+
+[data-theme="dark"] .db-card:hover .db-card-arrow {
+    background: var(--card-color, #43b3c4);
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */

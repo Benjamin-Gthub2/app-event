@@ -112,11 +112,11 @@ const IconUser = () => (
 
 const NAV_ITEMS = [
     { id: 'dashboard', label: 'Dashboard', Icon: IconDashboard, path: '/dashboard' },
-    { id: 'asistentes', label: 'Asistentes', Icon: IconUsers, path: '/dashboard' },
+    { id: 'asistentes', label: 'Asistentes', Icon: IconUsers, path: '/asistentes' },
     { id: 'qr-scanner', label: 'Escáner QR', Icon: IconQr, path: '/qr-scanner' },
-    { id: 'accesos', label: 'Control de Acceso', Icon: IconAccess, path: '/dashboard' },
-    { id: 'reportes', label: 'Reportes', Icon: IconReport, path: '/dashboard' },
-    { id: 'configuracion', label: 'Configuración', Icon: IconSettings, path: '/dashboard' },
+    { id: 'accesos', label: 'Control de Acceso', Icon: IconAccess, path: '/accesos' },
+    { id: 'reportes', label: 'Reportes', Icon: IconReport, path: '/reportes' },
+    { id: 'configuracion', label: 'Configuración', Icon: IconSettings, path: '/configuracion' },
 ];
 
 // ── Component ──────────────────────────────────────────────────────────────────
