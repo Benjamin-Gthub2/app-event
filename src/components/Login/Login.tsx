@@ -47,7 +47,8 @@ const Login: React.FC<LoginProps> = ({ onShowRegister }) => {
         try {
             const response = await authService.login({ username, password });
             login(response.data);
-            navigate('/dashboard');
+            // navigate('/dashboard');
+            navigate('/qr-scanner');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al iniciar sesión.');
         } finally {
