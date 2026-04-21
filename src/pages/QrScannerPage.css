@@ -8,6 +8,13 @@
     background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
 }
 
+.qr-page--embedded {
+    min-height: unset;
+    background: transparent;
+    padding: 0;
+    align-items: flex-start;
+}
+
 /* ── Scanner card ── */
 .qr-scanner-card {
     background: #1c1c1e;

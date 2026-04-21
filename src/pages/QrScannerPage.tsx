@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import QrScanner from '../components/QrScanner';
+import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import './QrScannerPage.css';
 
 type ParsedResult =
@@ -38,78 +39,82 @@ const QrScannerPage: React.FC = () => {
         const parsed = parseQrData(scannedData);
 
         return (
-            <div className="qr-page">
-                <div className="qr-result-card">
-                    <div className="qr-result-icon">✓</div>
-                    <h2 className="qr-result-title">Código leído</h2>
+            <DashboardLayout title="Escáner QR">
+                <div className="qr-page qr-page--embedded">
+                    <div className="qr-result-card">
+                        <div className="qr-result-icon">✓</div>
+                        <h2 className="qr-result-title">Código leído</h2>
 
-                    <div className="qr-detail-box">
-                        {parsed.type === 'url' && (
-                            <>
-                                <p className="qr-label">Enlace detectado</p>
-                                <a href={parsed.value} target="_blank" rel="noopener noreferrer" className="qr-link">
-                                    {parsed.value}
-                                </a>
-                            </>
-                        )}
-                        {parsed.type === 'json' && (
-                            <>
-                                <p className="qr-label">Datos estructurados</p>
-                                {Object.entries(parsed.value).map(([key, val]) => (
-                                    <div key={key} className="qr-row">
-                                        <span className="qr-key">{key}</span>
-                                        <span className="qr-val">{String(val)}</span>
-                                    </div>
-                                ))}
-                            </>
-                        )}
-                        {parsed.type === 'text' && (
-                            <>
-                                <p className="qr-label">Contenido</p>
-                                <p className="qr-raw-text">{parsed.value}</p>
-                            </>
-                        )}
+                        <div className="qr-detail-box">
+                            {parsed.type === 'url' && (
+                                <>
+                                    <p className="qr-label">Enlace detectado</p>
+                                    <a href={parsed.value} target="_blank" rel="noopener noreferrer" className="qr-link">
+                                        {parsed.value}
+                                    </a>
+                                </>
+                            )}
+                            {parsed.type === 'json' && (
+                                <>
+                                    <p className="qr-label">Datos estructurados</p>
+                                    {Object.entries(parsed.value).map(([key, val]) => (
+                                        <div key={key} className="qr-row">
+                                            <span className="qr-key">{key}</span>
+                                            <span className="qr-val">{String(val)}</span>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                            {parsed.type === 'text' && (
+                                <>
+                                    <p className="qr-label">Contenido</p>
+                                    <p className="qr-raw-text">{parsed.value}</p>
+                                </>
+                            )}
+                        </div>
+
+                        <button onClick={handleReset} className="qr-btn-back">
+                            ← Escanear otro código
+                        </button>
                     </div>
-
-                    <button onClick={handleReset} className="qr-btn-back">
-                        ← Escanear otro código
-                    </button>
                 </div>
-            </div>
+            </DashboardLayout>
         );
     }
 
     return (
-        <div className="qr-page">
-            <div className="qr-scanner-card">
-                <div className="qr-scanner-header">
-                    <div className="qr-scanner-icon-wrapper">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="7" height="7" />
-                            <rect x="14" y="3" width="7" height="7" />
-                            <rect x="3" y="14" width="7" height="7" />
-                            <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3" />
-                        </svg>
+        <DashboardLayout title="Escáner QR">
+            <div className="qr-page qr-page--embedded">
+                <div className="qr-scanner-card">
+                    <div className="qr-scanner-header">
+                        <div className="qr-scanner-icon-wrapper">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="7" height="7" />
+                                <rect x="14" y="3" width="7" height="7" />
+                                <rect x="3" y="14" width="7" height="7" />
+                                <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 className="qr-scanner-title">Escanear QR</h1>
+                            <p className="qr-scanner-subtitle">Apunta la cámara al código</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="qr-scanner-title">Escanear QR</h1>
-                        <p className="qr-scanner-subtitle">Apunta la cámara al código</p>
+
+                    <div className="qr-scanner-viewport">
+                        <QrScanner onScan={handleScan} scanKey={scanKey} />
+                        <div className="qr-corner qr-corner--tl" />
+                        <div className="qr-corner qr-corner--tr" />
+                        <div className="qr-corner qr-corner--bl" />
+                        <div className="qr-corner qr-corner--br" />
                     </div>
-                </div>
 
-                <div className="qr-scanner-viewport">
-                    <QrScanner onScan={handleScan} scanKey={scanKey} />
-                    <div className="qr-corner qr-corner--tl" />
-                    <div className="qr-corner qr-corner--tr" />
-                    <div className="qr-corner qr-corner--bl" />
-                    <div className="qr-corner qr-corner--br" />
+                    <p className="qr-scanner-hint">
+                        El escaneo es automático al detectar el código
+                    </p>
                 </div>
-
-                <p className="qr-scanner-hint">
-                    El escaneo es automático al detectar el código
-                </p>
             </div>
-        </div>
+        </DashboardLayout>
     );
 };
 
