@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { registrationService } from '../services/registrationService';
 import type { Registration, Pagination } from '../types/registration.types';
@@ -49,6 +49,22 @@ const IconChevronRight = () => (
     </svg>
 );
 
+const IconQr = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="5" height="5" /><rect x="16" y="3" width="5" height="5" />
+        <rect x="3" y="16" width="5" height="5" />
+        <path d="M21 16h-3v3" /><path d="M21 21v-1" /><path d="M16 21h1" />
+        <path d="M12 3v5" /><path d="M12 12v1" /><path d="M12 16v1" />
+        <path d="M3 12h5" /><path d="M12 12h1" /><path d="M16 12h5" />
+    </svg>
+);
+
+const IconClose = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+);
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fullName(names: string, surname: string, lastName: string | null) {
@@ -68,7 +84,89 @@ function formatDate(iso: string | null) {
 
 const PAGE_SIZE = 10;
 
-// ── Component ──────────────────────────────────────────────────────────────────
+// ── QR Modal ───────────────────────────────────────────────────────────────────
+
+interface QrModalProps {
+    registrationId: string;
+    name: string;
+    onClose: () => void;
+}
+
+function QrModal({ registrationId, name, onClose }: QrModalProps) {
+    const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const prevUrl = useRef<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        registrationService.getQrBlobUrl(registrationId)
+            .then((url) => {
+                if (!cancelled) {
+                    prevUrl.current = url;
+                    setBlobUrl(url);
+                }
+            })
+            .catch((e) => {
+                if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar QR');
+            });
+        return () => {
+            cancelled = true;
+            if (prevUrl.current) URL.revokeObjectURL(prevUrl.current);
+        };
+    }, [registrationId]);
+
+    return (
+        <div className="reg-modal-overlay" onClick={onClose}>
+            <div className="reg-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="reg-modal-header">
+                    <div>
+                        <h3 className="reg-modal-title">Código QR</h3>
+                        <p className="reg-modal-sub">{name}</p>
+                    </div>
+                    <button className="reg-modal-close" onClick={onClose} aria-label="Cerrar">
+                        <IconClose />
+                    </button>
+                </div>
+
+                <div className="reg-modal-body">
+                    {!blobUrl && !error && (
+                        <div className="reg-qr-loading">
+                            <span className="reg-qr-spinner" />
+                            <p>Generando QR...</p>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="reg-qr-error">
+                            <IconAlert />
+                            <p>{error}</p>
+                        </div>
+                    )}
+                    {blobUrl && (
+                        <img
+                            src={blobUrl}
+                            alt={`QR de ${name}`}
+                            className="reg-qr-img"
+                        />
+                    )}
+                </div>
+
+                {blobUrl && (
+                    <div className="reg-modal-footer">
+                        <a
+                            href={blobUrl}
+                            download={`qr-${registrationId}.png`}
+                            className="reg-qr-download"
+                        >
+                            Descargar PNG
+                        </a>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function RegistrationsPage() {
     const [rows, setRows] = useState<Registration[]>([]);
@@ -77,6 +175,7 @@ export default function RegistrationsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
 
     const fetchData = useCallback(async (targetPage: number) => {
         setLoading(true);
@@ -174,13 +273,14 @@ export default function RegistrationsPage() {
                                 <th>Sesión</th>
                                 <th>Registrado por</th>
                                 <th>Fecha</th>
+                                <th>QR</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading && rows.length === 0 ? (
                                 Array.from({ length: 6 }).map((_, i) => (
                                     <tr key={i}>
-                                        {Array.from({ length: 7 }).map((_, j) => (
+                                        {Array.from({ length: 8 }).map((_, j) => (
                                             <td key={j}>
                                                 <span className="reg-skeleton" style={{ width: `${60 + (j * 13) % 60}px` }} />
                                             </td>
@@ -189,7 +289,7 @@ export default function RegistrationsPage() {
                                 ))
                             ) : filtered.length === 0 ? (
                                 <tr className="reg-state-row">
-                                    <td colSpan={7}>
+                                    <td colSpan={8}>
                                         <div className="reg-state-icon"><IconUsers /></div>
                                         <p className="reg-state-title">
                                             {search ? 'Sin resultados' : 'Sin inscripciones'}
@@ -206,6 +306,7 @@ export default function RegistrationsPage() {
                                     const b = reg.beneficiary;
                                     const cb = reg.created_by;
                                     const rowNum = (page - 1) * PAGE_SIZE + idx + 1;
+                                    const name = fullName(b.names, b.surname, b.last_name);
 
                                     return (
                                         <tr key={reg.id}>
@@ -218,12 +319,8 @@ export default function RegistrationsPage() {
                                                         {initials(b.names, b.surname)}
                                                     </div>
                                                     <div>
-                                                        <div className="reg-beneficiary-name">
-                                                            {fullName(b.names, b.surname, b.last_name)}
-                                                        </div>
-                                                        <div className="reg-beneficiary-user">
-                                                            @{b.user.username}
-                                                        </div>
+                                                        <div className="reg-beneficiary-name">{name}</div>
+                                                        <div className="reg-beneficiary-user">@{b.user.username}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -248,6 +345,16 @@ export default function RegistrationsPage() {
                                             </td>
                                             <td>
                                                 <span className="reg-date">{formatDate(reg.created_at)}</span>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="reg-qr-btn"
+                                                    onClick={() => setQrModal({ id: reg.id, name })}
+                                                    title="Ver código QR"
+                                                >
+                                                    <IconQr />
+                                                    Ver QR
+                                                </button>
                                             </td>
                                         </tr>
                                     );
@@ -283,6 +390,15 @@ export default function RegistrationsPage() {
                     </div>
                 )}
             </div>
+
+            {/* QR Modal */}
+            {qrModal && (
+                <QrModal
+                    registrationId={qrModal.id}
+                    name={qrModal.name}
+                    onClose={() => setQrModal(null)}
+                />
+            )}
         </DashboardLayout>
     );
 }

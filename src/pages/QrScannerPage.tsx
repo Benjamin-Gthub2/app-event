@@ -1,79 +1,136 @@
 import React, { useState } from 'react';
 import QrScanner from '../components/QrScanner';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
+import { registrationService } from '../services/registrationService';
+import type { Registration } from '../types/registration.types';
 import './QrScannerPage.css';
 
-type ParsedResult =
-    | { type: 'url'; value: string }
-    | { type: 'json'; value: Record<string, unknown> }
-    | { type: 'text'; value: string };
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-function parseQrData(raw: string): ParsedResult {
-    try {
-        new URL(raw);
-        return { type: 'url', value: raw };
-    } catch (_) { /* not a URL */ }
-
-    try {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed === 'object' && parsed !== null) {
-            return { type: 'json', value: parsed as Record<string, unknown> };
-        }
-    } catch (_) { /* not JSON */ }
-
-    return { type: 'text', value: raw };
+function fullName(names: string, surname: string, lastName: string | null) {
+    return [names, surname, lastName].filter(Boolean).join(' ');
 }
 
-const QrScannerPage: React.FC = () => {
-    const [scannedData, setScannedData] = useState<string | null>(null);
-    const [scanKey, setScanKey] = useState(0);
+function formatDate(iso: string | null) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('es-PE', {
+        day: '2-digit', month: 'short', year: 'numeric',
+    });
+}
 
-    const handleScan = (data: string) => setScannedData(data);
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type ScanState =
+    | { status: 'idle' }
+    | { status: 'loading'; id: string }
+    | { status: 'found'; registration: Registration }
+    | { status: 'notfound'; id: string }
+    | { status: 'error'; message: string };
+
+// ── Component ──────────────────────────────────────────────────────────────────
+
+const QrScannerPage: React.FC = () => {
+    const [scanKey, setScanKey] = useState(0);
+    const [state, setState] = useState<ScanState>({ status: 'idle' });
+
+    const handleScan = async (id: string) => {
+        setState({ status: 'loading', id });
+        try {
+            const registration = await registrationService.getRegistrationById(id);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            setState({ status: 'found', registration });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : '';
+            if (msg.includes('404') || msg.includes('400')) {
+                if (navigator.vibrate) navigator.vibrate([300]);
+                setState({ status: 'notfound', id });
+            } else {
+                setState({ status: 'error', message: msg || 'Error al consultar el registro.' });
+            }
+        }
+    };
 
     const handleReset = () => {
-        setScannedData(null);
+        setState({ status: 'idle' });
         setScanKey(k => k + 1);
     };
 
-    if (scannedData) {
-        const parsed = parseQrData(scannedData);
+    // ── Loading ──────────────────────────────────────────────────────────────
 
+    if (state.status === 'loading') {
         return (
             <DashboardLayout title="Escáner QR">
                 <div className="qr-page qr-page--embedded">
                     <div className="qr-result-card">
-                        <div className="qr-result-icon">✓</div>
-                        <h2 className="qr-result-title">Código leído</h2>
+                        <div className="qr-result-icon qr-result-icon--loading">
+                            <span className="qr-spinner" />
+                        </div>
+                        <h2 className="qr-result-title">Verificando...</h2>
+                        <p className="qr-result-subtitle">Consultando inscripción</p>
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    // ── Found ────────────────────────────────────────────────────────────────
+
+    if (state.status === 'found') {
+        const { registration: r } = state;
+        const b = r.beneficiary;
+        const s = r.session;
+
+        return (
+            <DashboardLayout title="Escáner QR">
+                <div className="qr-page qr-page--embedded">
+                    <div className="qr-result-card qr-result-card--success">
+                        <div className="qr-result-icon qr-result-icon--success">✓</div>
+                        <h2 className="qr-result-title">Inscripción válida</h2>
+                        <p className="qr-result-subtitle" style={{ color: '#22c55e' }}>Asistente verificado correctamente</p>
 
                         <div className="qr-detail-box">
-                            {parsed.type === 'url' && (
-                                <>
-                                    <p className="qr-label">Enlace detectado</p>
-                                    <a href={parsed.value} target="_blank" rel="noopener noreferrer" className="qr-link">
-                                        {parsed.value}
-                                    </a>
-                                </>
-                            )}
-                            {parsed.type === 'json' && (
-                                <>
-                                    <p className="qr-label">Datos estructurados</p>
-                                    {Object.entries(parsed.value).map(([key, val]) => (
-                                        <div key={key} className="qr-row">
-                                            <span className="qr-key">{key}</span>
-                                            <span className="qr-val">{String(val)}</span>
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-                            {parsed.type === 'text' && (
-                                <>
-                                    <p className="qr-label">Contenido</p>
-                                    <p className="qr-raw-text">{parsed.value}</p>
-                                </>
-                            )}
+                            <p className="qr-label">Beneficiario</p>
+                            <div className="qr-row">
+                                <span className="qr-key">Nombre</span>
+                                <span className="qr-val">{fullName(b.names, b.surname, b.last_name)}</span>
+                            </div>
+                            <div className="qr-row">
+                                <span className="qr-key">Documento</span>
+                                <span className="qr-val">{b.type_document.abbreviated_description} {b.document}</span>
+                            </div>
                         </div>
 
-                        <button onClick={handleReset} className="qr-btn-back">
+                        <div className="qr-detail-box">
+                            <p className="qr-label">Taller / Sesión</p>
+                            <div className="qr-row">
+                                <span className="qr-key">Taller</span>
+                                <span className="qr-val">{s.work_shop.name}</span>
+                            </div>
+                            <div className="qr-row">
+                                <span className="qr-key">Inicio</span>
+                                <span className="qr-val">{formatDate(s.start_date)}</span>
+                            </div>
+                            <div className="qr-row">
+                                <span className="qr-key">Fin</span>
+                                <span className="qr-val">{formatDate(s.end_date)}</span>
+                            </div>
+                        </div>
+
+                        <div className="qr-detail-box">
+                            <p className="qr-label">Registrado por</p>
+                            <div className="qr-row">
+                                <span className="qr-key">Nombre</span>
+                                <span className="qr-val">
+                                    {fullName(r.created_by.names, r.created_by.surname, r.created_by.last_name)}
+                                </span>
+                            </div>
+                            <div className="qr-row">
+                                <span className="qr-key">Fecha</span>
+                                <span className="qr-val">{formatDate(r.created_at)}</span>
+                            </div>
+                        </div>
+
+                        <button onClick={handleReset} className="qr-btn-back qr-btn-back--success">
                             ← Escanear otro código
                         </button>
                     </div>
@@ -81,6 +138,54 @@ const QrScannerPage: React.FC = () => {
             </DashboardLayout>
         );
     }
+
+    // ── Not found ────────────────────────────────────────────────────────────
+
+    if (state.status === 'notfound') {
+        return (
+            <DashboardLayout title="Escáner QR">
+                <div className="qr-page qr-page--embedded">
+                    <div className="qr-result-card qr-result-card--error">
+                        <div className="qr-result-icon qr-result-icon--error">✕</div>
+                        <h2 className="qr-result-title">No encontrado</h2>
+                        <p className="qr-result-subtitle" style={{ color: '#ef4444' }}>
+                            El código escaneado no corresponde a ninguna inscripción registrada
+                        </p>
+                        <div className="qr-detail-box">
+                            <p className="qr-label">ID escaneado</p>
+                            <p className="qr-raw-text" style={{ color: '#ef4444', wordBreak: 'break-all' }}>
+                                {state.id}
+                            </p>
+                        </div>
+                        <button onClick={handleReset} className="qr-btn-back qr-btn-back--error">
+                            ← Intentar de nuevo
+                        </button>
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    // ── Generic error ────────────────────────────────────────────────────────
+
+    if (state.status === 'error') {
+        return (
+            <DashboardLayout title="Escáner QR">
+                <div className="qr-page qr-page--embedded">
+                    <div className="qr-result-card qr-result-card--error">
+                        <div className="qr-result-icon qr-result-icon--error">!</div>
+                        <h2 className="qr-result-title">Error de conexión</h2>
+                        <p className="qr-result-subtitle" style={{ color: '#ef4444' }}>{state.message}</p>
+                        <button onClick={handleReset} className="qr-btn-back qr-btn-back--error">
+                            ← Intentar de nuevo
+                        </button>
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    // ── Idle / scanner ───────────────────────────────────────────────────────
 
     return (
         <DashboardLayout title="Escáner QR">
@@ -97,7 +202,7 @@ const QrScannerPage: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="qr-scanner-title">Escanear QR</h1>
-                            <p className="qr-scanner-subtitle">Apunta la cámara al código</p>
+                            <p className="qr-scanner-subtitle">Apunta la cámara al código de inscripción</p>
                         </div>
                     </div>
 

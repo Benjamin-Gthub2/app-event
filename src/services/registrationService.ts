@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { RegistrationsResponse } from '../types/registration.types';
+import type { Registration, RegistrationsResponse } from '../types/registration.types';
 
 export interface GetRegistrationsParams {
     page?: number;
@@ -7,6 +7,11 @@ export interface GetRegistrationsParams {
     start_date?: string;
     end_date?: string;
     created_by?: string;
+}
+
+interface RegistrationByIdResponse {
+    data: Registration;
+    status: number;
 }
 
 export const registrationService = {
@@ -20,5 +25,23 @@ export const registrationService = {
 
         const qs = query.toString();
         return apiClient.get<RegistrationsResponse>(`/event/registrations${qs ? `?${qs}` : ''}`);
+    },
+
+    async getRegistrationById(id: string): Promise<Registration> {
+        const res = await apiClient.get<RegistrationByIdResponse>(`/event/registrations/${id}`);
+        return res.data;
+    },
+
+    async getQrBlobUrl(id: string): Promise<string> {
+        const token = localStorage.getItem('auth_token');
+        const tenantId = localStorage.getItem('x_tenant_id');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+        const response = await fetch(`/api/v1/event/registrations/${id}/qr`, { headers });
+        if (!response.ok) throw new Error(`Error ${response.status}`);
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
     },
 };
