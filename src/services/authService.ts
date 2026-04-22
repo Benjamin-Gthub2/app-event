@@ -20,6 +20,7 @@ export const authService = {
 
     removeToken(): void {
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('x_tenant_id');
     },
 
     isAuthenticated(): boolean {

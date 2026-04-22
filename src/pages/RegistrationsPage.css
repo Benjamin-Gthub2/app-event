@@ -1,0 +1,423 @@
+/* ── Theme vars (inherit from DashboardLayout) ───────────────────────────────── */
+:root,
+[data-theme="light"] {
+    --reg-card-bg:        #ffffff;
+    --reg-card-border:    #e8edf2;
+    --reg-card-shadow:    0 1px 6px rgba(0,0,0,0.06);
+    --reg-text-primary:   #1e293b;
+    --reg-text-secondary: #64748b;
+    --reg-text-muted:     #94a3b8;
+    --reg-th-bg:          #f8fafc;
+    --reg-th-text:        #64748b;
+    --reg-row-hover:      #f8fafc;
+    --reg-divider:        #e8edf2;
+    --reg-badge-bg:       #e0f2fe;
+    --reg-badge-text:     #0369a1;
+    --reg-avatar-bg:      #e0f2fe;
+    --reg-avatar-text:    #0284c7;
+    --reg-input-bg:       #f1f5f9;
+    --reg-input-border:   #e2e8f0;
+    --reg-input-focus:    #0284c7;
+    --reg-btn-primary:    #0284c7;
+    --reg-btn-primary-hover: #0369a1;
+    --reg-empty-icon:     #cbd5e1;
+    --reg-page-btn-bg:    #f1f5f9;
+    --reg-page-btn-text:  #374151;
+    --reg-page-btn-active-bg:  #0284c7;
+    --reg-page-btn-active-text:#ffffff;
+}
+
+[data-theme="dark"] {
+    --reg-card-bg:        #161b22;
+    --reg-card-border:    #30363d;
+    --reg-card-shadow:    0 1px 6px rgba(0,0,0,0.3);
+    --reg-text-primary:   #e6edf3;
+    --reg-text-secondary: #8b949e;
+    --reg-text-muted:     #6e7681;
+    --reg-th-bg:          #1c2128;
+    --reg-th-text:        #8b949e;
+    --reg-row-hover:      #1c2128;
+    --reg-divider:        #30363d;
+    --reg-badge-bg:       #0d2038;
+    --reg-badge-text:     #58a6ff;
+    --reg-avatar-bg:      #0d2038;
+    --reg-avatar-text:    #58a6ff;
+    --reg-input-bg:       #21262d;
+    --reg-input-border:   #30363d;
+    --reg-input-focus:    #58a6ff;
+    --reg-btn-primary:    #1f6feb;
+    --reg-btn-primary-hover: #388bfd;
+    --reg-empty-icon:     #30363d;
+    --reg-page-btn-bg:    #21262d;
+    --reg-page-btn-text:  #c9d1d9;
+    --reg-page-btn-active-bg:  #1f6feb;
+    --reg-page-btn-active-text:#ffffff;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────────── */
+.reg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.reg-header-left h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--reg-text-primary);
+    margin: 0 0 2px;
+}
+
+.reg-header-left p {
+    font-size: 13px;
+    color: var(--reg-text-secondary);
+    margin: 0;
+}
+
+.reg-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Search bar ──────────────────────────────────────────────────────────────── */
+.reg-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.reg-search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--reg-text-muted);
+    display: flex;
+    pointer-events: none;
+}
+
+.reg-search {
+    padding: 8px 12px 8px 34px;
+    border: 1px solid var(--reg-input-border);
+    border-radius: 8px;
+    background: var(--reg-input-bg);
+    color: var(--reg-text-primary);
+    font-size: 13px;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.reg-search::placeholder {
+    color: var(--reg-text-muted);
+}
+
+.reg-search:focus {
+    border-color: var(--reg-input-focus);
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.12);
+}
+
+/* ── Reload button ───────────────────────────────────────────────────────────── */
+.reg-reload-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--reg-btn-primary);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.reg-reload-btn:hover:not(:disabled) {
+    background: var(--reg-btn-primary-hover);
+}
+
+.reg-reload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.reg-spin {
+    animation: reg-spin 0.8s linear infinite;
+}
+
+@keyframes reg-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Card / table container ──────────────────────────────────────────────────── */
+.reg-card {
+    background: var(--reg-card-bg);
+    border: 1px solid var(--reg-card-border);
+    border-radius: 14px;
+    box-shadow: var(--reg-card-shadow);
+    overflow: hidden;
+}
+
+.reg-card-title {
+    padding: 18px 20px 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--reg-text-primary);
+    border-bottom: 1px solid var(--reg-divider);
+    margin: 0;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────────── */
+.reg-table-wrap {
+    overflow-x: auto;
+}
+
+.reg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+.reg-table thead tr {
+    background: var(--reg-th-bg);
+}
+
+.reg-table th {
+    padding: 11px 16px;
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--reg-th-text);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--reg-divider);
+}
+
+.reg-table td {
+    padding: 13px 16px;
+    color: var(--reg-text-primary);
+    border-bottom: 1px solid var(--reg-divider);
+    vertical-align: middle;
+}
+
+.reg-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.reg-table tbody tr:hover td {
+    background: var(--reg-row-hover);
+}
+
+/* ── Beneficiary cell ────────────────────────────────────────────────────────── */
+.reg-beneficiary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reg-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--reg-avatar-bg);
+    color: var(--reg-avatar-text);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.reg-beneficiary-name {
+    font-weight: 600;
+    color: var(--reg-text-primary);
+    line-height: 1.3;
+}
+
+.reg-beneficiary-user {
+    font-size: 11.5px;
+    color: var(--reg-text-muted);
+}
+
+/* ── Badge ───────────────────────────────────────────────────────────────────── */
+.reg-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--reg-badge-bg);
+    color: var(--reg-badge-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ── Workshop pill ───────────────────────────────────────────────────────────── */
+.reg-workshop {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #e0f7fa;
+    color: #0e7490;
+    font-size: 12px;
+    font-weight: 600;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .reg-workshop {
+    background: #0c2a30;
+    color: #22d3ee;
+}
+
+/* ── Date cell ───────────────────────────────────────────────────────────────── */
+.reg-date {
+    color: var(--reg-text-secondary);
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+/* ── Empty / loading states ──────────────────────────────────────────────────── */
+.reg-state-row td {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--reg-text-secondary);
+}
+
+.reg-state-icon {
+    margin: 0 auto 12px;
+    color: var(--reg-empty-icon);
+    display: flex;
+    justify-content: center;
+}
+
+.reg-state-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--reg-text-primary);
+    margin: 0 0 4px;
+}
+
+.reg-state-desc {
+    font-size: 13px;
+    color: var(--reg-text-secondary);
+    margin: 0;
+}
+
+/* ── Loading skeleton ────────────────────────────────────────────────────────── */
+.reg-skeleton {
+    display: inline-block;
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--reg-divider) 25%, var(--reg-th-bg) 50%, var(--reg-divider) 75%);
+    background-size: 200% 100%;
+    animation: reg-shimmer 1.2s infinite;
+}
+
+@keyframes reg-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────────── */
+.reg-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--reg-divider);
+}
+
+.reg-pagination-info {
+    font-size: 12.5px;
+    color: var(--reg-text-secondary);
+}
+
+.reg-pagination-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reg-page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 7px;
+    background: var(--reg-page-btn-bg);
+    color: var(--reg-page-btn-text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.reg-page-btn:hover:not(:disabled) {
+    background: var(--reg-btn-primary);
+    color: #ffffff;
+}
+
+.reg-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.reg-page-btn--active {
+    background: var(--reg-page-btn-active-bg);
+    color: var(--reg-page-btn-active-text);
+    font-weight: 700;
+}
+
+/* ── Error alert ─────────────────────────────────────────────────────────────── */
+.reg-error {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    background: #fff1f1;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .reg-error {
+    background: #2d1515;
+    border-color: #7f1d1d;
+    color: #f87171;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .reg-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .reg-search {
+        width: 100%;
+    }
+
+    .reg-header-right {
+        width: 100%;
+    }
+}
