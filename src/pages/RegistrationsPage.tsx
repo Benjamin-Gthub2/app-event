@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { registrationService } from '../services/registrationService';
+import { workshopService } from '../services/workshopService';
+import { sessionService } from '../services/sessionService';
+import { peopleService } from '../services/peopleService';
+import { SearchableSelect } from '../components/SearchableSelect';
 import type { Registration, Pagination } from '../types/registration.types';
+import type { Workshop } from '../types/workshop.types';
+import type { Session } from '../types/session.types';
+import type { Person } from '../types/people.types';
+import type { SelectOption } from '../components/SearchableSelect';
 import './RegistrationsPage.css';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -65,6 +73,12 @@ const IconClose = () => (
     </svg>
 );
 
+const IconPlus = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+);
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fullName(names: string, surname: string, lastName: string | null) {
@@ -83,6 +97,186 @@ function formatDate(iso: string | null) {
 }
 
 const PAGE_SIZE = 10;
+
+function formatDateShort(iso: string | null) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── Add Registration Modal ─────────────────────────────────────────────────────
+
+interface AddRegistrationModalProps {
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps) {
+    const [workshopId, setWorkshopId] = useState('');
+    const [sessionId, setSessionId] = useState('');
+    const [personId, setPersonId] = useState('');
+
+    const [workshops, setWorkshops] = useState<Workshop[]>([]);
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [people, setPeople] = useState<Person[]>([]);
+
+    const [loadingWorkshops, setLoadingWorkshops] = useState(true);
+    const [loadingSessions, setLoadingSessions] = useState(false);
+    const [loadingPeople, setLoadingPeople] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
+
+    useEffect(() => {
+        workshopService.getWorkshops({ size_page: 100 })
+            .then((res) => setWorkshops(res.data ?? []))
+            .catch(() => setWorkshops([]))
+            .finally(() => setLoadingWorkshops(false));
+
+        peopleService.getPeople({ size_page: 100 })
+            .then((res) => setPeople(res.data ?? []))
+            .catch(() => setPeople([]))
+            .finally(() => setLoadingPeople(false));
+    }, []);
+
+    useEffect(() => {
+        if (!workshopId) {
+            setSessions([]);
+            setSessionId('');
+            return;
+        }
+        setLoadingSessions(true);
+        setSessionId('');
+        sessionService.getSessions({ workshop_id: workshopId, size_page: 100 })
+            .then((res) => setSessions(res.data ?? []))
+            .catch(() => setSessions([]))
+            .finally(() => setLoadingSessions(false));
+    }, [workshopId]);
+
+    const workshopOptions: SelectOption[] = workshops.map((w) => ({
+        value: w.id,
+        label: w.name,
+        sublabel: w.code ?? undefined,
+    }));
+
+    const sessionOptions: SelectOption[] = sessions.map((s) => {
+        const start = formatDateShort(s.start_date);
+        const end = formatDateShort(s.end_date);
+        return {
+            value: s.id,
+            label: start || 'Sesión',
+            sublabel: end ? `hasta ${end}` : undefined,
+        };
+    });
+
+    const personOptions: SelectOption[] = people.map((p) => ({
+        value: p.id,
+        label: [p.names, p.surname, p.last_name].filter(Boolean).join(' '),
+        sublabel: `${p.document_type.abbreviated_description} ${p.document}`,
+    }));
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!sessionId || !personId) return;
+        setSaving(true);
+        setFormError(null);
+        try {
+            await registrationService.createRegistration({ session_id: sessionId, beneficiary_id: personId });
+            onSuccess();
+        } catch (err) {
+            setFormError(err instanceof Error ? err.message : 'Error al guardar la inscripción.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="reg-modal-overlay" onClick={onClose}>
+            <div className="reg-modal reg-form-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="reg-modal-header">
+                    <div>
+                        <h3 className="reg-modal-title">Nueva Inscripción</h3>
+                        <p className="reg-modal-sub">Completa los datos para registrar al asistente</p>
+                    </div>
+                    <button className="reg-modal-close" onClick={onClose} aria-label="Cerrar" type="button">
+                        <IconClose />
+                    </button>
+                </div>
+
+                <form className="reg-form-body" onSubmit={handleSubmit}>
+                    {formError && (
+                        <div className="reg-form-alert">
+                            <IconAlert />
+                            {formError}
+                        </div>
+                    )}
+
+                    <div className="reg-form-field">
+                        <label className="reg-form-label">
+                            Taller <span className="reg-required">*</span>
+                        </label>
+                        <SearchableSelect
+                            options={workshopOptions}
+                            value={workshopId}
+                            onChange={(v) => setWorkshopId(v)}
+                            placeholder="Seleccionar taller..."
+                            searchPlaceholder="Buscar taller..."
+                            loading={loadingWorkshops}
+                            emptyText="Sin talleres disponibles"
+                        />
+                    </div>
+
+                    <div className="reg-form-field">
+                        <label className="reg-form-label">
+                            Sesión <span className="reg-required">*</span>
+                        </label>
+                        <SearchableSelect
+                            options={sessionOptions}
+                            value={sessionId}
+                            onChange={(v) => setSessionId(v)}
+                            placeholder={workshopId ? 'Seleccionar sesión...' : 'Primero selecciona un taller'}
+                            searchPlaceholder="Buscar sesión..."
+                            loading={loadingSessions}
+                            disabled={!workshopId}
+                            emptyText="Sin sesiones para este taller"
+                        />
+                    </div>
+
+                    <div className="reg-form-field">
+                        <label className="reg-form-label">
+                            Beneficiario <span className="reg-required">*</span>
+                        </label>
+                        <SearchableSelect
+                            options={personOptions}
+                            value={personId}
+                            onChange={(v) => setPersonId(v)}
+                            placeholder="Seleccionar beneficiario..."
+                            searchPlaceholder="Buscar por nombre o documento..."
+                            loading={loadingPeople}
+                            emptyText="Sin personas disponibles"
+                        />
+                    </div>
+
+                    <div className="reg-form-actions">
+                        <button
+                            type="button"
+                            className="reg-form-cancel"
+                            onClick={onClose}
+                            disabled={saving}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="reg-form-submit"
+                            disabled={!sessionId || !personId || saving}
+                        >
+                            {saving ? 'Guardando...' : 'Guardar'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 // ── QR Modal ───────────────────────────────────────────────────────────────────
 
@@ -176,6 +370,7 @@ export default function RegistrationsPage() {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
+    const [addModal, setAddModal] = useState(false);
 
     const fetchData = useCallback(async (targetPage: number) => {
         setLoading(true);
@@ -243,6 +438,10 @@ export default function RegistrationsPage() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+                    <button className="reg-add-btn" onClick={() => setAddModal(true)}>
+                        <IconPlus />
+                        Agregar
+                    </button>
                     <button className="reg-reload-btn" onClick={() => fetchData(page)} disabled={loading}>
                         <IconRefresh spinning={loading} />
                         Actualizar
@@ -397,6 +596,17 @@ export default function RegistrationsPage() {
                     registrationId={qrModal.id}
                     name={qrModal.name}
                     onClose={() => setQrModal(null)}
+                />
+            )}
+
+            {/* Add Registration Modal */}
+            {addModal && (
+                <AddRegistrationModal
+                    onClose={() => setAddModal(false)}
+                    onSuccess={() => {
+                        setAddModal(false);
+                        fetchData(page);
+                    }}
                 />
             )}
         </DashboardLayout>

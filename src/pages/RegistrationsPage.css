@@ -120,6 +120,34 @@
     box-shadow: 0 0 0 3px rgba(2,132,199,0.12);
 }
 
+/* ── Add button ──────────────────────────────────────────────────────────────── */
+.reg-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.reg-add-btn:hover {
+    background: #15803d;
+}
+
+[data-theme="dark"] .reg-add-btn {
+    background: #166534;
+}
+
+[data-theme="dark"] .reg-add-btn:hover {
+    background: #15803d;
+}
+
 /* ── Reload button ───────────────────────────────────────────────────────────── */
 .reg-reload-btn {
     display: flex;
@@ -567,6 +595,106 @@
 
 .reg-qr-download:hover {
     background: var(--reg-btn-primary-hover);
+}
+
+/* ── Form modal ──────────────────────────────────────────────────────────────── */
+.reg-form-modal {
+    max-width: 480px;
+}
+
+.reg-form-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.reg-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reg-form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--reg-text-primary);
+}
+
+.reg-required {
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.reg-form-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #fff1f1;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .reg-form-alert {
+    background: #2d1515;
+    border-color: #7f1d1d;
+    color: #f87171;
+}
+
+.reg-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid var(--reg-divider);
+    margin-top: 2px;
+}
+
+.reg-form-cancel {
+    padding: 8px 16px;
+    border: 1px solid var(--reg-input-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--reg-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.reg-form-cancel:hover:not(:disabled) {
+    background: var(--reg-row-hover);
+    color: var(--reg-text-primary);
+}
+
+.reg-form-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reg-form-submit {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--reg-btn-primary);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.reg-form-submit:hover:not(:disabled) {
+    background: var(--reg-btn-primary-hover);
+}
+
+.reg-form-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */

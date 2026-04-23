@@ -1,3 +1,7 @@
+import type { Pagination } from './common.types';
+
+export type { Pagination };
+
 export interface TypeDocument {
     id: string;
     description: string;
@@ -57,13 +61,6 @@ export interface Registration {
     session: Session;
     beneficiary: Beneficiary;
     created_by: CreatedBy;
-}
-
-export interface Pagination {
-    page: number;
-    size_page: number;
-    total: number;
-    total_pages: number;
 }
 
 export interface RegistrationsResponse {

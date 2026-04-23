@@ -9,8 +9,18 @@ export interface GetRegistrationsParams {
     created_by?: string;
 }
 
+export interface CreateRegistrationBody {
+    session_id: string;
+    beneficiary_id: string;
+}
+
 interface RegistrationByIdResponse {
     data: Registration;
+    status: number;
+}
+
+interface CreateRegistrationResponse {
+    data: string;
     status: number;
 }
 
@@ -29,6 +39,11 @@ export const registrationService = {
 
     async getRegistrationById(id: string): Promise<Registration> {
         const res = await apiClient.get<RegistrationByIdResponse>(`/event/registrations/${id}`);
+        return res.data;
+    },
+
+    async createRegistration(body: CreateRegistrationBody): Promise<string> {
+        const res = await apiClient.post<CreateRegistrationResponse>('/event/registrations', body);
         return res.data;
     },
 
