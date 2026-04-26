@@ -10,6 +10,7 @@ import type { Workshop } from '../types/workshop.types';
 import type { Session } from '../types/session.types';
 import type { Person } from '../types/people.types';
 import type { SelectOption } from '../components/SearchableSelect';
+import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import './RegistrationsPage.css';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -386,6 +387,8 @@ export default function RegistrationsPage() {
         }
     }, []);
 
+    const { connected: mqttConnected } = useMqttRegistrations(() => fetchData(page));
+
     useEffect(() => {
         fetchData(page);
     }, [fetchData, page]);
@@ -446,6 +449,10 @@ export default function RegistrationsPage() {
                         <IconRefresh spinning={loading} />
                         Actualizar
                     </button>
+                    <span className="reg-mqtt-status" title={mqttConnected ? 'Tiempo real activo' : 'Sin conexión en tiempo real'}>
+                        <span className={`reg-mqtt-dot ${mqttConnected ? 'reg-mqtt-dot--on' : ''}`} />
+                        {mqttConnected ? 'En vivo' : 'Sin conexión'}
+                    </span>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
-import type { Pagination } from './common.types';
+import type {Pagination} from './common.types';
 
-export type { Pagination };
+export type {Pagination};
 
 export interface TypeDocument {
     id: string;
@@ -10,15 +10,15 @@ export interface TypeDocument {
 }
 
 export interface TypeUser {
-    id: string;
-    description: string;
-    code: string;
+    id: string | null;
+    description: string | null;
+    code: string | null;
     created_at: string | null;
 }
 
 export interface User {
-    id: string;
-    username: string;
+    id: string | null;
+    username: string | null;
     type_user: TypeUser;
 }
 
