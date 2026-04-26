@@ -3,6 +3,8 @@ import LoginPage from "../pages/LoginPage";
 import Dashboard from "../pages/Dashboard.tsx";
 import QrScannerPage from "../pages/QrScannerPage";
 import RegistrationsPage from "../pages/RegistrationsPage";
+import AccessControlPage from "../pages/AccessControlPage";
+import TalleresPage from "../pages/TalleresPage";
 import PrivateRoute from "./PrivateRoute";
 
 export default function AppRouter() {
@@ -34,6 +36,15 @@ export default function AppRouter() {
                         </PrivateRoute>
                     }
                 />
+                <Route
+                    path="/accesos"
+                    element={
+                        <PrivateRoute>
+                            <AccessControlPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route path="/talleres" element={<TalleresPage />} />
             </Routes>
         </BrowserRouter>
     );

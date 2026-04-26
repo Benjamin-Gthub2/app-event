@@ -1,0 +1,477 @@
+/* ── Talleres display page — standalone full-screen ─────────────────────────── */
+
+/* Theme applied via data-theme on <html>, same key as the rest of the app */
+:root,
+[data-theme="light"] {
+    --tal-bg:           #f0f6ff;
+    --tal-header-bg:    #ffffff;
+    --tal-header-border:#e2e8f0;
+    --tal-card-bg:      #ffffff;
+    --tal-card-border:  #e2e8f0;
+    --tal-card-shadow:  0 2px 12px rgba(0,0,0,0.07);
+    --tal-text-primary: #0f172a;
+    --tal-text-secondary:#475569;
+    --tal-text-muted:   #94a3b8;
+    --tal-num-color:    #0f172a;
+    --tal-num-accent:   #06b6d4;
+    --tal-footer-bg:    #1e293b;
+    --tal-footer-text:  #94a3b8;
+    --tal-icon-btn-hover:#f1f5f9;
+    --tal-divider:      #e2e8f0;
+}
+
+[data-theme="dark"] {
+    --tal-bg:           #0d1117;
+    --tal-header-bg:    #161b22;
+    --tal-header-border:#30363d;
+    --tal-card-bg:      #161b22;
+    --tal-card-border:  #30363d;
+    --tal-card-shadow:  0 2px 12px rgba(0,0,0,0.4);
+    --tal-text-primary: #e6edf3;
+    --tal-text-secondary:#8b949e;
+    --tal-text-muted:   #6e7681;
+    --tal-num-color:    #e6edf3;
+    --tal-num-accent:   #06b6d4;
+    --tal-footer-bg:    #010409;
+    --tal-footer-text:  #6e7681;
+    --tal-icon-btn-hover:#21262d;
+    --tal-divider:      #30363d;
+}
+
+/* ── Reset / base ────────────────────────────────────────────────────────────── */
+.tal-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--tal-bg);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    transition: background 0.25s;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────────── */
+.tal-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 24px;
+    height: 68px;
+    background: var(--tal-header-bg);
+    border-bottom: 1px solid var(--tal-header-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
+    transition: background 0.25s, border-color 0.25s;
+}
+
+.tal-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.tal-brand-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #06b6d4, #0e7490);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tal-brand-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--tal-text-primary);
+    line-height: 1.1;
+    letter-spacing: 0.3px;
+    transition: color 0.25s;
+}
+
+.tal-brand-sub {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--tal-text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.25s;
+}
+
+/* ── Global stats bar (center) ───────────────────────────────────────────────── */
+.tal-global-stats {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.tal-gstat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.tal-gstat-num {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.tal-gstat-num--teal   { color: #06b6d4; }
+.tal-gstat-num--green  { color: #22c55e; }
+.tal-gstat-num--red    { color: #f87171; }
+.tal-gstat-num--orange { color: #f97316; }
+
+.tal-gstat-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--tal-text-muted);
+}
+
+/* ── Top-right controls ──────────────────────────────────────────────────────── */
+.tal-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.tal-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #052e16;
+    border: 1px solid #166534;
+    color: #4ade80;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.tal-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: tal-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tal-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+    50%       { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+}
+
+.tal-clock {
+    text-align: right;
+}
+
+.tal-clock-time {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--tal-num-accent);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.tal-clock-date {
+    font-size: 10.5px;
+    color: var(--tal-text-muted);
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.tal-refresh-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--tal-header-border);
+    color: var(--tal-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.tal-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--tal-text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.tal-icon-btn:hover {
+    background: var(--tal-icon-btn-hover);
+    color: var(--tal-text-primary);
+}
+
+/* ── Grid content ────────────────────────────────────────────────────────────── */
+.tal-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.tal-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+@media (max-width: 1200px) { .tal-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px)  { .tal-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px)  { .tal-grid { grid-template-columns: 1fr; } }
+
+/* ── Workshop card ───────────────────────────────────────────────────────────── */
+.tal-card {
+    background: var(--tal-card-bg);
+    border: 1px solid var(--tal-card-border);
+    border-radius: 16px;
+    box-shadow: var(--tal-card-shadow);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    border-top: 3px solid transparent;
+}
+
+.tal-card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+}
+
+/* top border accent per category */
+.tal-card[data-cat="LIDERAZGO"]    { border-top-color: #8b5cf6; }
+.tal-card[data-cat="TECNOLOGÍA"]   { border-top-color: #3b82f6; }
+.tal-card[data-cat="COMUNICACIÓN"] { border-top-color: #ec4899; }
+.tal-card[data-cat="FINANZAS"]     { border-top-color: #22c55e; }
+.tal-card[data-cat="HABILIDADES"]  { border-top-color: #f97316; }
+.tal-card[data-cat="GESTIÓN"]      { border-top-color: #a855f7; }
+.tal-card[data-cat="MARKETING"]    { border-top-color: #ef4444; }
+.tal-card[data-cat="VENTAS"]       { border-top-color: #06b6d4; }
+
+.tal-card-tags {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.tal-cat-badge {
+    display: inline-flex;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border: 1.5px solid currentColor;
+}
+
+.tal-cat-badge[data-cat="LIDERAZGO"]    { color: #8b5cf6; background: #f5f3ff; }
+.tal-cat-badge[data-cat="TECNOLOGÍA"]   { color: #3b82f6; background: #eff6ff; }
+.tal-cat-badge[data-cat="COMUNICACIÓN"] { color: #db2777; background: #fdf2f8; }
+.tal-cat-badge[data-cat="FINANZAS"]     { color: #16a34a; background: #f0fdf4; }
+.tal-cat-badge[data-cat="HABILIDADES"]  { color: #ea580c; background: #fff7ed; }
+.tal-cat-badge[data-cat="GESTIÓN"]      { color: #9333ea; background: #faf5ff; }
+.tal-cat-badge[data-cat="MARKETING"]    { color: #dc2626; background: #fef2f2; }
+.tal-cat-badge[data-cat="VENTAS"]       { color: #0891b2; background: #ecfeff; }
+
+[data-theme="dark"] .tal-cat-badge[data-cat="LIDERAZGO"]    { background: #1e0a3c; }
+[data-theme="dark"] .tal-cat-badge[data-cat="TECNOLOGÍA"]   { background: #0a1628; }
+[data-theme="dark"] .tal-cat-badge[data-cat="COMUNICACIÓN"] { background: #2d0a1a; }
+[data-theme="dark"] .tal-cat-badge[data-cat="FINANZAS"]     { background: #052e16; }
+[data-theme="dark"] .tal-cat-badge[data-cat="HABILIDADES"]  { background: #431407; }
+[data-theme="dark"] .tal-cat-badge[data-cat="GESTIÓN"]      { background: #1a0a2e; }
+[data-theme="dark"] .tal-cat-badge[data-cat="MARKETING"]    { background: #2d0a0a; }
+[data-theme="dark"] .tal-cat-badge[data-cat="VENTAS"]       { background: #0c2a30; }
+
+.tal-avail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.tal-avail-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.tal-avail-badge--available {
+    color: #16a34a;
+    background: #dcfce7;
+}
+
+.tal-avail-badge--full {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+.tal-avail-badge--almost {
+    color: #d97706;
+    background: #fef3c7;
+}
+
+[data-theme="dark"] .tal-avail-badge--available { background: #052e16; }
+[data-theme="dark"] .tal-avail-badge--full       { background: #2d0a0a; }
+[data-theme="dark"] .tal-avail-badge--almost     { background: #2d1f07; }
+
+.tal-card-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--tal-text-primary);
+    line-height: 1.25;
+    margin: 0;
+    transition: color 0.25s;
+}
+
+.tal-card-meta {
+    font-size: 12px;
+    color: var(--tal-text-muted);
+    font-weight: 500;
+}
+
+/* ── Numbers ─────────────────────────────────────────────────────────────────── */
+.tal-numbers {
+    display: flex;
+    gap: 16px;
+}
+
+.tal-num-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 10px;
+    background: var(--tal-bg);
+    border: 1px solid var(--tal-divider);
+}
+
+.tal-num-value {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.tal-num-value--default { color: var(--tal-num-color); }
+.tal-num-value--accent  { color: var(--tal-num-accent); }
+
+.tal-num-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--tal-text-muted);
+    margin-top: 4px;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────────── */
+.tal-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tal-progress-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--tal-text-secondary);
+}
+
+.tal-progress-bar {
+    height: 7px;
+    border-radius: 4px;
+    background: var(--tal-divider);
+    overflow: hidden;
+}
+
+.tal-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.tal-progress-fill--green  { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.tal-progress-fill--orange { background: linear-gradient(90deg, #fb923c, #ea580c); }
+.tal-progress-fill--red    { background: linear-gradient(90deg, #f87171, #dc2626); }
+
+.tal-progress-spots {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tal-progress-spots--ok   { color: #16a34a; }
+.tal-progress-spots--none { color: #dc2626; }
+
+/* ── Footer ticker ───────────────────────────────────────────────────────────── */
+.tal-footer {
+    background: var(--tal-footer-bg);
+    padding: 10px 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.tal-ticker-track {
+    display: flex;
+    animation: tal-ticker 40s linear infinite;
+    white-space: nowrap;
+}
+
+.tal-ticker-track:hover {
+    animation-play-state: paused;
+}
+
+.tal-ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 32px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--tal-footer-text);
+    white-space: nowrap;
+    border-right: 1px solid #30363d;
+}
+
+.tal-ticker-item span {
+    font-weight: 700;
+}
+
+.tal-ticker-live {
+    color: #4ade80;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+@keyframes tal-ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
