@@ -94,6 +94,14 @@ function formatDate(iso: string | null) {
     return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface SummaryStats {
+    total_registrations: number;
+    total_payments: number;
+    total_presences: number;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function AccessControlPage() {
@@ -112,6 +120,7 @@ export default function AccessControlPage() {
 
     // Results
     const [rows, setRows] = useState<Registration[]>([]);
+    const [summary, setSummary] = useState<SummaryStats | null>(null);
     const [queried, setQueried] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -155,6 +164,7 @@ export default function AccessControlPage() {
         setWorkshopId('');
         setSessionId('');
         setRows([]);
+        setSummary(null);
         setQueried(false);
         setError(null);
     };
@@ -163,8 +173,20 @@ export default function AccessControlPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await registrationService.getRegistrations({ size_page: 500 });
-            let data = res.data ?? [];
+            const registrationsPromise = registrationService.getRegistrations({ size_page: 500 });
+
+            let summaryPromise: Promise<{ data: Array<{ total_registrations: number | null; total_payments: number | null; total_presences: number | null }> }>;
+            if (sessionId) {
+                summaryPromise = sessionService.getSessionSummary(sessionId);
+            } else if (workshopId) {
+                summaryPromise = workshopService.getWorkshopSummary(workshopId);
+            } else {
+                summaryPromise = eventService.getEventSummary(eventId || undefined);
+            }
+
+            const [regRes, sumRes] = await Promise.all([registrationsPromise, summaryPromise]);
+
+            let data = regRes.data ?? [];
             if (workshopId) {
                 data = data.filter((r) => r.session.work_shop.id === workshopId);
             }
@@ -172,13 +194,24 @@ export default function AccessControlPage() {
                 data = data.filter((r) => r.session.id === sessionId);
             }
             setRows(data);
+
+            const agg = (sumRes.data ?? []).reduce<SummaryStats>(
+                (acc, item) => ({
+                    total_registrations: acc.total_registrations + (item.total_registrations ?? 0),
+                    total_payments: acc.total_payments + (item.total_payments ?? 0),
+                    total_presences: acc.total_presences + (item.total_presences ?? 0),
+                }),
+                { total_registrations: 0, total_payments: 0, total_presences: 0 },
+            );
+            setSummary(agg);
+
             setQueried(true);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error al cargar los registros.');
         } finally {
             setLoading(false);
         }
-    }, [workshopId, sessionId]);
+    }, [eventId, workshopId, sessionId]);
 
     const handleConsult = () => { fetchData(); };
 
@@ -288,7 +321,7 @@ export default function AccessControlPage() {
                         <IconUsers size={24} />
                     </div>
                     <div className="ac-stat-body">
-                        <div className="ac-stat-count">{queried ? rows.length : '—'}</div>
+                        <div className="ac-stat-count">{queried ? (summary?.total_registrations ?? 0) : '—'}</div>
                         <p className="ac-stat-label">Inscritos</p>
                         <p className="ac-stat-desc">Total de inscripciones registradas</p>
                     </div>
@@ -299,9 +332,9 @@ export default function AccessControlPage() {
                         <IconCheckCircle size={24} />
                     </div>
                     <div className="ac-stat-body">
-                        <div className="ac-stat-count">0</div>
+                        <div className="ac-stat-count">{queried ? (summary?.total_payments ?? 0) : '—'}</div>
                         <p className="ac-stat-label">Pagados</p>
-                        <p className="ac-stat-desc">Disponible próximamente</p>
+                        <p className="ac-stat-desc">Total con pago registrado</p>
                     </div>
                 </div>
 
@@ -310,9 +343,9 @@ export default function AccessControlPage() {
                         <IconUserCheck size={24} />
                     </div>
                     <div className="ac-stat-body">
-                        <div className="ac-stat-count">0</div>
+                        <div className="ac-stat-count">{queried ? (summary?.total_presences ?? 0) : '—'}</div>
                         <p className="ac-stat-label">Asistentes</p>
-                        <p className="ac-stat-desc">Disponible próximamente</p>
+                        <p className="ac-stat-desc">Total con presencia confirmada</p>
                     </div>
                 </div>
             </div>

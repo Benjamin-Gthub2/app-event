@@ -39,3 +39,16 @@ export interface WorkshopResponse {
     data: Workshop;
     status: number;
 }
+
+export interface WorkshopSums {
+    id: string | null;
+    name: string | null;
+    total_registrations: number | null;
+    total_payments: number | null;
+    total_presences: number | null;
+}
+
+export interface WorkshopSummaryResponse {
+    data: WorkshopSums[];
+    status: number;
+}

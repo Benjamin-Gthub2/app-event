@@ -32,3 +32,17 @@ export interface SessionResponse {
     data: Session;
     status: number;
 }
+
+export interface SessionSums {
+    id: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    total_registrations: number | null;
+    total_payments: number | null;
+    total_presences: number | null;
+}
+
+export interface SessionSummaryResponse {
+    data: SessionSums[];
+    status: number;
+}

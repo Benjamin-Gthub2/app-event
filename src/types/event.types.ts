@@ -70,13 +70,13 @@ export interface Event {
     name: string;
     description: string;
     code: string | null;
-    phone: string | null;
-    document: string;
-    address: string;
-    industry: string;
+    // phone: string | null;
+    // document: string;
+    // address: string;
+    // industry: string;
     enable: boolean;
     created_at: string | null;
-    event_files: EventFile[];
+    // event_files: EventFile[];
 }
 
 export interface EventsResponse {
@@ -87,5 +87,18 @@ export interface EventsResponse {
 
 export interface EventRolesResponse {
     data: EventRole[];
+    status: number;
+}
+
+export interface EventSums {
+    id: string;
+    name: string;
+    total_registrations: number;
+    total_payments: number;
+    total_presences: number;
+}
+
+export interface EventSummaryResponse {
+    data: EventSums[];
     status: number;
 }

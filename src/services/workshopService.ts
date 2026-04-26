@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Workshop, WorkshopsResponse, WorkshopResponse } from '../types/workshop.types';
+import type { Workshop, WorkshopsResponse, WorkshopResponse, WorkshopSummaryResponse } from '../types/workshop.types';
 
 export interface GetWorkshopsParams {
     page?: number;
@@ -39,6 +39,13 @@ export const workshopService = {
     async getWorkshopById(id: string): Promise<Workshop> {
         const res = await apiClient.get<WorkshopResponse>(`/event/workshops/${id}`);
         return res.data;
+    },
+
+    getWorkshopSummary(workshop_id?: string): Promise<WorkshopSummaryResponse> {
+        const query = new URLSearchParams();
+        if (workshop_id) query.set('workshop_id', workshop_id);
+        const qs = query.toString();
+        return apiClient.get<WorkshopSummaryResponse>(`/event/workshops/summary${qs ? `?${qs}` : ''}`);
     },
 
     async createWorkshop(body: CreateWorkshopBody): Promise<string> {

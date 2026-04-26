@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Session, SessionsResponse, SessionResponse } from '../types/session.types';
+import type { Session, SessionsResponse, SessionResponse, SessionSummaryResponse } from '../types/session.types';
 
 export interface GetSessionsParams {
     page?: number;
@@ -35,6 +35,13 @@ export const sessionService = {
     async getSessionById(id: string): Promise<Session> {
         const res = await apiClient.get<SessionResponse>(`/event/sessions/${id}`);
         return res.data;
+    },
+
+    getSessionSummary(session_id?: string): Promise<SessionSummaryResponse> {
+        const query = new URLSearchParams();
+        if (session_id) query.set('session_id', session_id);
+        const qs = query.toString();
+        return apiClient.get<SessionSummaryResponse>(`/event/sessions/summary${qs ? `?${qs}` : ''}`);
     },
 
     async createSession(body: CreateSessionBody): Promise<string> {
