@@ -490,6 +490,12 @@
     transition: background-color 0.25s;
 }
 
+.dbl-content--full-bleed {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .dbl-sidebar {

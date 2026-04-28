@@ -46,6 +46,14 @@ const IconReport = () => (
     </svg>
 );
 
+const IconTalleres = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+    </svg>
+);
+
 const IconSettings = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
@@ -115,6 +123,7 @@ const NAV_ITEMS = [
     { id: 'asistentes', label: 'Asistentes', Icon: IconUsers, path: '/asistentes' },
     { id: 'qr-scanner', label: 'Escáner QR', Icon: IconQr, path: '/qr-scanner' },
     { id: 'accesos', label: 'Control de Acceso', Icon: IconAccess, path: '/accesos' },
+    { id: 'talleres', label: 'Talleres', Icon: IconTalleres, path: '/talleres' },
     { id: 'reportes', label: 'Reportes', Icon: IconReport, path: '/reportes' },
     { id: 'configuracion', label: 'Configuración', Icon: IconSettings, path: '/configuracion' },
 ];
@@ -124,9 +133,10 @@ const NAV_ITEMS = [
 interface DashboardLayoutProps {
     children: React.ReactNode;
     title?: string;
+    fullBleed?: boolean;
 }
 
-export default function DashboardLayout({ children, title = 'Inicio' }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title = 'Inicio', fullBleed = false }: DashboardLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const { logout } = useAuth();
@@ -259,7 +269,7 @@ export default function DashboardLayout({ children, title = 'Inicio' }: Dashboar
                 </header>
 
                 {/* Content */}
-                <main className="dbl-content">
+                <main className={`dbl-content${fullBleed ? ' dbl-content--full-bleed' : ''}`}>
                     {children}
                 </main>
             </div>

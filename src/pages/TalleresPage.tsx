@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import './TalleresPage.css';
 import { workshopService } from '../services/workshopService';
 import type { WorkshopSums } from '../types/workshop.types';
 import { useMqttWorkshops } from '../hooks/useMqttWorkshops';
 import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
+import DashboardLayout from '../components/Dashboard/DashboardLayout';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -65,12 +67,6 @@ function getProgressClass(status: 'available' | 'full' | 'almost') {
     return 'tal-progress-fill--green';
 }
 
-function getThemeFromStorage(): 'light' | 'dark' {
-    const stored = localStorage.getItem('theme');
-    if (stored === 'light' || stored === 'dark') return stored;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 function formatClock(d: Date) {
     return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 }
@@ -93,12 +89,13 @@ function computeStats(workshops: WorkshopSums[]) {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function TalleresPage() {
-    const [theme, setTheme] = useState<'light' | 'dark'>(getThemeFromStorage);
+    const { theme, toggleTheme } = useTheme();
     const [now, setNow] = useState(new Date());
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [workshops, setWorkshops] = useState<WorkshopSums[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const pageRef = useRef<HTMLDivElement>(null);
 
     const fetchData = useCallback(async () => {
         try {
@@ -115,12 +112,6 @@ export default function TalleresPage() {
 
     const { connected: mqttConnected } = useMqttWorkshops(fetchData);
     useMqttRegistrations(fetchData);
-
-    // Sync theme to document
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
 
     // Initial fetch
     useEffect(() => {
@@ -139,13 +130,11 @@ export default function TalleresPage() {
         return () => document.removeEventListener('fullscreenchange', handler);
     }, []);
 
-    const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
-
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+            pageRef.current?.requestFullscreen().catch(() => {});
         } else {
-            document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+            document.exitFullscreen().catch(() => {});
         }
     };
 
@@ -165,7 +154,8 @@ export default function TalleresPage() {
     ];
 
     return (
-        <div className="tal-page">
+        <DashboardLayout title="Disponibilidad de Talleres" fullBleed>
+        <div className="tal-page" ref={pageRef}>
             {/* ── Top bar ── */}
             <header className="tal-topbar">
                 <div className="tal-brand">
@@ -299,5 +289,6 @@ export default function TalleresPage() {
                 </div>
             </footer>
         </div>
+        </DashboardLayout>
     );
 }

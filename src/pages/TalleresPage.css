@@ -42,11 +42,16 @@
 .tal-page {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    flex: 1;
+    min-height: 0;
     background: var(--tal-bg);
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     transition: background 0.25s;
 }
+
+/* In fullscreen the element IS the viewport — enable its own scroll */
+.tal-page:-webkit-full-screen { overflow-y: auto; }
+.tal-page:fullscreen           { overflow-y: auto; }
 
 /* ── Top bar ─────────────────────────────────────────────────────────────────── */
 .tal-topbar {
@@ -245,7 +250,6 @@
 .tal-content {
     flex: 1;
     padding: 24px;
-    overflow-y: auto;
 }
 
 .tal-state-msg {
