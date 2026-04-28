@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './TalleresPage.css';
+import { workshopService } from '../services/workshopService';
+import type { WorkshopSums } from '../types/workshop.types';
+import { useMqttWorkshops } from '../hooks/useMqttWorkshops';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -33,31 +36,18 @@ const IconExitFullscreen = () => (
     </svg>
 );
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
+// ── Mock times (hora a confirmar) ──────────────────────────────────────────────
 
-interface TallerItem {
-    id: number;
-    category: string;
-    code: string;
-    name: string;
-    date: string;
-    time: string;
-    capacity: number;
-    inscritos: number;
-}
-
-const TALLERES: TallerItem[] = [
-    { id: 1, category: 'LIDERAZGO',    code: 'LGE-01', name: 'Liderazgo y Gestión de Equipos',           date: '26 Abr', time: '09:00 – 11:00', capacity: 100, inscritos: 71 },
-    { id: 2, category: 'TECNOLOGÍA',   code: 'ITD-02', name: 'Innovación y Transformación Digital',       date: '26 Abr', time: '10:30 – 12:30', capacity: 80,  inscritos: 80 },
-    { id: 3, category: 'COMUNICACIÓN', code: 'CE-03',  name: 'Comunicación Estratégica y Presentaciones', date: '26 Abr', time: '09:00 – 10:30', capacity: 60,  inscritos: 60 },
-    { id: 4, category: 'FINANZAS',     code: 'FNF-04', name: 'Finanzas para No Financieros',              date: '26 Abr', time: '11:00 – 13:00', capacity: 50,  inscritos: 24 },
-    { id: 5, category: 'HABILIDADES',  code: 'DHB-05', name: 'Desarrollo de Habilidades Blandas',         date: '26 Abr', time: '14:00 – 16:00', capacity: 90,  inscritos: 88 },
-    { id: 6, category: 'GESTIÓN',      code: 'GPA-06', name: 'Gestión de Proyectos Ágil (Scrum)',         date: '26 Abr', time: '15:00 – 17:00', capacity: 70,  inscritos: 44 },
-    { id: 7, category: 'MARKETING',    code: 'MRS-07', name: 'Marketing Digital y Redes Sociales',        date: '26 Abr', time: '09:00 – 11:00', capacity: 65,  inscritos: 65 },
-    { id: 8, category: 'VENTAS',       code: 'NE-08',  name: 'Negociación y Cierre Efectivo',             date: '26 Abr', time: '13:00 – 15:00', capacity: 45,  inscritos: 22 },
+const MOCK_TIMES = [
+    '08:00 – 10:00',
+    '09:00 – 11:00',
+    '10:00 – 12:00',
+    '11:00 – 13:00',
+    '14:00 – 16:00',
+    '15:00 – 17:00',
+    '16:00 – 18:00',
+    '08:30 – 10:30',
 ];
-
-const REFRESH_SECS = 30;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -90,13 +80,13 @@ function formatDateFull(d: Date) {
 
 // ── Derived stats ──────────────────────────────────────────────────────────────
 
-function computeStats(talleres: TallerItem[]) {
-    const totalInscritos = talleres.reduce((s, t) => s + t.inscritos, 0);
-    const totalCapacity  = talleres.reduce((s, t) => s + t.capacity, 0);
-    const llenos = talleres.filter((t) => t.inscritos >= t.capacity).length;
-    const conCupos = talleres.filter((t) => t.inscritos < t.capacity).length;
+function computeStats(workshops: WorkshopSums[]) {
+    const totalInscritos = workshops.reduce((s, w) => s + (w.total_registrations ?? 0), 0);
+    const totalCapacity  = workshops.reduce((s, w) => s + (w.capacity ?? 0), 0);
+    const llenos    = workshops.filter((w) => (w.total_registrations ?? 0) >= (w.capacity ?? 1)).length;
+    const conCupos  = workshops.filter((w) => (w.total_registrations ?? 0) < (w.capacity ?? 1)).length;
     const pctOcupacion = totalCapacity > 0 ? Math.round((totalInscritos / totalCapacity) * 100) : 0;
-    return { totalInscritos, conCupos, llenos, pctOcupacion };
+    return { totalInscritos, conCupos, llenos, pctOcupacion, totalCapacity };
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -104,14 +94,36 @@ function computeStats(talleres: TallerItem[]) {
 export default function TalleresPage() {
     const [theme, setTheme] = useState<'light' | 'dark'>(getThemeFromStorage);
     const [now, setNow] = useState(new Date());
-    const [countdown, setCountdown] = useState(REFRESH_SECS);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [workshops, setWorkshops] = useState<WorkshopSums[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Sync theme to document (same key the rest of the app uses)
+    const fetchData = useCallback(async () => {
+        try {
+            const res = await workshopService.getWorkshopSummary();
+            setWorkshops(res.data);
+            setError(null);
+        } catch (err) {
+            console.error('Error al cargar resumen de talleres:', err);
+            setError('No se pudo cargar la información de talleres');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const { connected: mqttConnected } = useMqttWorkshops(fetchData);
+
+    // Sync theme to document
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     // Clock ticker
     useEffect(() => {
@@ -119,15 +131,10 @@ export default function TalleresPage() {
         return () => clearInterval(id);
     }, []);
 
-    // Refresh countdown
     useEffect(() => {
-        const id = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) return REFRESH_SECS;
-                return prev - 1;
-            });
-        }, 1000);
-        return () => clearInterval(id);
+        const handler = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', handler);
+        return () => document.removeEventListener('fullscreenchange', handler);
     }, []);
 
     const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
@@ -140,25 +147,18 @@ export default function TalleresPage() {
         }
     };
 
-    useEffect(() => {
-        const handler = () => setIsFullscreen(!!document.fullscreenElement);
-        document.addEventListener('fullscreenchange', handler);
-        return () => document.removeEventListener('fullscreenchange', handler);
-    }, []);
+    const stats = computeStats(workshops);
 
-    const stats = computeStats(TALLERES);
-
-    // Build ticker text (duplicated for infinite scroll illusion)
     const tickerItems = [
         `Talleres Disponibles: ${stats.conCupos}`,
         `Talleres Llenos: ${stats.llenos}`,
         `Ocupación General: ${stats.pctOcupacion}%`,
         `Total Inscritos: ${stats.totalInscritos}`,
-        `Capacidad Total: ${TALLERES.reduce((s, t) => s + t.capacity, 0)}`,
+        `Capacidad Total: ${stats.totalCapacity}`,
         `Talleres Disponibles: ${stats.conCupos}`,
         `Talleres Llenos: ${stats.llenos}`,
         `Ocupación General: ${stats.pctOcupacion}%`,
-        `🟢 TRANSMISIÓN EN VIVO`,
+        mqttConnected ? `🟢 EN VIVO` : `🔴 SIN CONEXIÓN`,
         `Última actualización: ${formatClock(now)}`,
     ];
 
@@ -166,7 +166,6 @@ export default function TalleresPage() {
         <div className="tal-page">
             {/* ── Top bar ── */}
             <header className="tal-topbar">
-                {/* Brand */}
                 <div className="tal-brand">
                     <div className="tal-brand-badge">PP</div>
                     <div>
@@ -175,7 +174,6 @@ export default function TalleresPage() {
                     </div>
                 </div>
 
-                {/* Global stats */}
                 <div className="tal-global-stats">
                     <div className="tal-gstat">
                         <span className="tal-gstat-num tal-gstat-num--teal">{stats.totalInscritos}</span>
@@ -195,17 +193,15 @@ export default function TalleresPage() {
                     </div>
                 </div>
 
-                {/* Controls */}
                 <div className="tal-controls">
-                    <div className="tal-live-badge">
+                    <div className={`tal-live-badge${mqttConnected ? '' : ' tal-live-badge--off'}`}>
                         <span className="tal-live-dot" />
-                        EN VIVO
+                        {mqttConnected ? 'EN VIVO' : 'SIN CONEXIÓN'}
                     </div>
                     <div className="tal-clock">
                         <div className="tal-clock-time">{formatClock(now)}</div>
                         <div className="tal-clock-date">{formatDateFull(now)}</div>
                     </div>
-                    <div className="tal-refresh-badge" title={`Actualiza en ${countdown}s`}>{countdown}</div>
                     <button className="tal-icon-btn" onClick={toggleTheme} title="Cambiar tema">
                         {theme === 'light' ? <IconMoon /> : <IconSun />}
                     </button>
@@ -217,60 +213,70 @@ export default function TalleresPage() {
 
             {/* ── Grid ── */}
             <div className="tal-content">
-                <div className="tal-grid">
-                    {TALLERES.map((t) => {
-                        const status = getAvailStatus(t.capacity, t.inscritos);
-                        const pct = Math.min(100, Math.round((t.inscritos / t.capacity) * 100));
-                        const available = t.capacity - t.inscritos;
+                {loading ? (
+                    <div className="tal-state-msg">Cargando talleres…</div>
+                ) : error ? (
+                    <div className="tal-state-msg tal-state-msg--error">{error}</div>
+                ) : workshops.length === 0 ? (
+                    <div className="tal-state-msg">No hay talleres registrados.</div>
+                ) : (
+                    <div className="tal-grid">
+                        {workshops.map((w, i) => {
+                            const capacity  = w.capacity ?? 0;
+                            const inscritos = w.total_registrations ?? 0;
+                            const status    = getAvailStatus(capacity, inscritos);
+                            const pct       = capacity > 0 ? Math.min(100, Math.round((inscritos / capacity) * 100)) : 0;
+                            const available = Math.max(0, capacity - inscritos);
+                            const time      = MOCK_TIMES[i % MOCK_TIMES.length];
 
-                        return (
-                            <div key={t.id} className="tal-card" data-cat={t.category}>
-                                {/* Tags */}
-                                <div className="tal-card-tags">
-                                    <span className="tal-cat-badge" data-cat={t.category}>{t.category}</span>
-                                    <span className={`tal-avail-badge tal-avail-badge--${status}`}>
-                                        <span className="tal-avail-dot" />
-                                        {status === 'full' ? 'LLENO' : status === 'almost' ? 'CASI LLENO' : 'DISPONIBLE'}
-                                    </span>
-                                </div>
-
-                                {/* Name */}
-                                <div>
-                                    <p className="tal-card-name">{t.name}</p>
-                                    <p className="tal-card-meta">{t.code} &bull; {t.date} &bull; {t.time}</p>
-                                </div>
-
-                                {/* Numbers */}
-                                <div className="tal-numbers">
-                                    <div className="tal-num-block">
-                                        <span className="tal-num-value tal-num-value--default">{t.capacity}</span>
-                                        <span className="tal-num-label">Capacidad</span>
+                            return (
+                                <div key={w.id ?? i} className="tal-card">
+                                    {/* Tags */}
+                                    <div className="tal-card-tags">
+                                        <span className={`tal-avail-badge tal-avail-badge--${status}`}>
+                                            <span className="tal-avail-dot" />
+                                            {status === 'full' ? 'LLENO' : status === 'almost' ? 'CASI LLENO' : 'DISPONIBLE'}
+                                        </span>
                                     </div>
-                                    <div className="tal-num-block">
-                                        <span className="tal-num-value tal-num-value--accent">{t.inscritos}</span>
-                                        <span className="tal-num-label">Inscritos</span>
-                                    </div>
-                                </div>
 
-                                {/* Progress */}
-                                <div className="tal-progress-wrap">
-                                    <span className="tal-progress-label">{pct}% ocupado</span>
-                                    <div className="tal-progress-bar">
-                                        <div
-                                            className={`tal-progress-fill ${getProgressClass(status)}`}
-                                            style={{ width: `${pct}%` }}
-                                        />
+                                    {/* Name */}
+                                    <div>
+                                        <p className="tal-card-name">{w.name ?? 'Taller'}</p>
+                                        <p className="tal-card-meta">{time}</p>
                                     </div>
-                                    <span className={`tal-progress-spots ${available > 0 ? 'tal-progress-spots--ok' : 'tal-progress-spots--none'}`}>
-                                        {available > 0
-                                            ? `${available} cupo${available !== 1 ? 's' : ''} disponible${available !== 1 ? 's' : ''}`
-                                            : 'Sin cupos disponibles'}
-                                    </span>
+
+                                    {/* Numbers */}
+                                    <div className="tal-numbers">
+                                        <div className="tal-num-block">
+                                            <span className="tal-num-value tal-num-value--default">{capacity}</span>
+                                            <span className="tal-num-label">Capacidad</span>
+                                        </div>
+                                        <div className="tal-num-block">
+                                            <span className="tal-num-value tal-num-value--accent">{inscritos}</span>
+                                            <span className="tal-num-label">Inscritos</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress */}
+                                    <div className="tal-progress-wrap">
+                                        <span className="tal-progress-label">{pct}% ocupado</span>
+                                        <div className="tal-progress-bar">
+                                            <div
+                                                className={`tal-progress-fill ${getProgressClass(status)}`}
+                                                style={{ width: `${pct}%` }}
+                                            />
+                                        </div>
+                                        <span className={`tal-progress-spots ${available > 0 ? 'tal-progress-spots--ok' : 'tal-progress-spots--none'}`}>
+                                            {available > 0
+                                                ? `${available} cupo${available !== 1 ? 's' : ''} disponible${available !== 1 ? 's' : ''}`
+                                                : 'Sin cupos disponibles'}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* ── Footer ticker ── */}

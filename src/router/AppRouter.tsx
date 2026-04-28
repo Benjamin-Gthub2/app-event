@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {BrowserRouter, Routes, Route} from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import Dashboard from "../pages/Dashboard.tsx";
 import QrScannerPage from "../pages/QrScannerPage";
@@ -11,12 +11,12 @@ export default function AppRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<LoginPage />} />
+                <Route path="/" element={<LoginPage/>}/>
                 <Route
                     path="/dashboard"
                     element={
                         <PrivateRoute>
-                            <Dashboard />
+                            <Dashboard/>
                         </PrivateRoute>
                     }
                 />
@@ -24,7 +24,7 @@ export default function AppRouter() {
                     path="/qr-scanner"
                     element={
                         <PrivateRoute>
-                            <QrScannerPage />
+                            <QrScannerPage/>
                         </PrivateRoute>
                     }
                 />
@@ -32,7 +32,7 @@ export default function AppRouter() {
                     path="/asistentes"
                     element={
                         <PrivateRoute>
-                            <RegistrationsPage />
+                            <RegistrationsPage/>
                         </PrivateRoute>
                     }
                 />
@@ -40,11 +40,17 @@ export default function AppRouter() {
                     path="/accesos"
                     element={
                         <PrivateRoute>
-                            <AccessControlPage />
+                            <AccessControlPage/>
                         </PrivateRoute>
                     }
                 />
-                <Route path="/talleres" element={<TalleresPage />} />
+                <Route
+                    path="/talleres"
+                    element={
+                        <PrivateRoute>
+                            <TalleresPage/>
+                        </PrivateRoute>
+                    }/>
             </Routes>
         </BrowserRouter>
     );
