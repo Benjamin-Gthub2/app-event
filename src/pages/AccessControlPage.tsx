@@ -4,6 +4,7 @@ import { registrationService } from '../services/registrationService';
 import { eventService } from '../services/eventService';
 import { workshopService } from '../services/workshopService';
 import { sessionService } from '../services/sessionService';
+import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import type { Registration } from '../types/registration.types';
 import type { Event } from '../types/event.types';
 import type { Workshop } from '../types/workshop.types';
@@ -213,6 +214,10 @@ export default function AccessControlPage() {
         }
     }, [eventId, workshopId, sessionId]);
 
+    const { connected: mqttConnected } = useMqttRegistrations(() => {
+        if (queried) fetchData();
+    });
+
     const handleConsult = () => { fetchData(); };
 
     const handleRefresh = () => {
@@ -227,10 +232,16 @@ export default function AccessControlPage() {
                     <h2>Control de Acceso</h2>
                     <p>Consulta inscritos, pagados y asistentes por evento, taller o sesión</p>
                 </div>
-                <button className="ac-refresh-btn" onClick={handleRefresh} disabled={loading || !queried}>
-                    <IconRefresh spinning={loading} />
-                    Actualizar
-                </button>
+                <div className="ac-header-right">
+                    <span className="ac-mqtt-status" title={mqttConnected ? 'Tiempo real activo' : 'Sin conexión en tiempo real'}>
+                        <span className={`ac-mqtt-dot ${mqttConnected ? 'ac-mqtt-dot--on' : ''}`} />
+                        {mqttConnected ? 'En vivo' : 'Sin conexión'}
+                    </span>
+                    <button className="ac-refresh-btn" onClick={handleRefresh} disabled={loading || !queried}>
+                        <IconRefresh spinning={loading} />
+                        Actualizar
+                    </button>
+                </div>
             </div>
 
             {/* Filter card */}

@@ -3,6 +3,7 @@ import './TalleresPage.css';
 import { workshopService } from '../services/workshopService';
 import type { WorkshopSums } from '../types/workshop.types';
 import { useMqttWorkshops } from '../hooks/useMqttWorkshops';
+import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,7 @@ export default function TalleresPage() {
     }, []);
 
     const { connected: mqttConnected } = useMqttWorkshops(fetchData);
+    useMqttRegistrations(fetchData);
 
     // Sync theme to document
     useEffect(() => {

@@ -79,6 +79,43 @@
     margin: 0;
 }
 
+.ac-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.ac-mqtt-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ac-text-muted);
+    white-space: nowrap;
+}
+
+.ac-mqtt-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ac-text-muted);
+    flex-shrink: 0;
+    transition: background 0.3s;
+}
+
+.ac-mqtt-dot--on {
+    background: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+    animation: ac-mqtt-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ac-mqtt-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25); }
+    50%       { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.10); }
+}
+
 .ac-refresh-btn {
     display: flex;
     align-items: center;
