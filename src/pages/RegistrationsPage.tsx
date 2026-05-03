@@ -225,6 +225,9 @@ interface CreatePersonModalProps {
     onCreated: (person: SelectOption) => void;
 }
 
+const DNI_TYPE_ID = '00a58296-93b4-11ee-a040-0242ac11000e';
+const RUC_TYPE_ID = '00a58522-93b4-11ee-a040-0242ac11000e';
+
 function CreatePersonModal({ initialSearch, onClose, onCreated }: CreatePersonModalProps) {
     const [form, setForm] = useState<CreatePersonBody>({
         names: '',
@@ -239,10 +242,57 @@ function CreatePersonModal({ initialSearch, onClose, onCreated }: CreatePersonMo
     });
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
+    const [fetchingDoc, setFetchingDoc] = useState(false);
+    const [docError, setDocError] = useState<string | null>(null);
+
+    const canSearchDoc = form.type_document_id === DNI_TYPE_ID || form.type_document_id === RUC_TYPE_ID;
 
     const set = (field: keyof CreatePersonBody) =>
         (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+    const handleDocSearch = async () => {
+        const token = import.meta.env.VITE_APIPERU_TOKEN as string | undefined;
+        if (!token) {
+            setDocError('Configura VITE_APIPERU_TOKEN en el archivo .env para usar esta función.');
+            return;
+        }
+        if (!form.document.trim()) {
+            setDocError('Ingresa el número de documento primero.');
+            return;
+        }
+        setFetchingDoc(true);
+        setDocError(null);
+        try {
+            const isDni = form.type_document_id === DNI_TYPE_ID;
+            const url = isDni
+                ? `https://apiperu.dev/api/dni/${form.document.trim()}`
+                : `https://apiperu.dev/api/ruc/${form.document.trim()}`;
+            const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+            });
+            const json = await res.json();
+            if (!res.ok || !json.success) throw new Error(json.message ?? `Error ${res.status}`);
+            if (isDni) {
+                setForm(prev => ({
+                    ...prev,
+                    names:     json.data.nombres          ?? prev.names,
+                    surname:   json.data.apellido_paterno ?? prev.surname,
+                    last_name: json.data.apellido_materno ?? prev.last_name,
+                }));
+            } else {
+                setForm(prev => ({
+                    ...prev,
+                    names:   json.data.nombre_o_razon_social ?? prev.names,
+                    surname: prev.surname || '-',
+                }));
+            }
+        } catch (err) {
+            setDocError(err instanceof Error ? err.message : 'No se pudo consultar APIPERU.');
+        } finally {
+            setFetchingDoc(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -302,7 +352,29 @@ function CreatePersonModal({ initialSearch, onClose, onCreated }: CreatePersonMo
                         </div>
                         <div className="reg-form-field">
                             <label className="reg-form-label">N° de documento <span className="reg-required">*</span></label>
-                            <input className="reg-form-input" value={form.document} onChange={set('document')} required placeholder="Ej. 12345678" />
+                            <div className="reg-doc-input-wrap">
+                                <input
+                                    className="reg-form-input reg-doc-input"
+                                    value={form.document}
+                                    onChange={e => { set('document')(e); setDocError(null); }}
+                                    required
+                                    placeholder="Ej. 12345678"
+                                />
+                                {canSearchDoc && (
+                                    <button
+                                        type="button"
+                                        className="reg-doc-search-btn"
+                                        onClick={handleDocSearch}
+                                        disabled={fetchingDoc || !form.document.trim()}
+                                        title="Buscar datos en APIPERU"
+                                    >
+                                        {fetchingDoc
+                                            ? <span className="reg-doc-spinner" />
+                                            : <IconSearch />}
+                                    </button>
+                                )}
+                            </div>
+                            {docError && <p className="reg-doc-error">{docError}</p>}
                         </div>
                     </div>
 
