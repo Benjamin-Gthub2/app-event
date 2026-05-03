@@ -15,8 +15,9 @@ function fullName(names: string, surname: string, lastName: string | null) {
 
 function formatDate(iso: string | null) {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('es-PE', {
+    return new Date(iso).toLocaleString('es-PE', {
         day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
     });
 }
 

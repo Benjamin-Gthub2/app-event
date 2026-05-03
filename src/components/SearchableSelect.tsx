@@ -16,6 +16,10 @@ interface SearchableSelectProps {
     loading?: boolean;
     disabled?: boolean;
     emptyText?: string;
+    emptyAction?: {
+        label: string | ((search: string) => string);
+        onClick: (search: string) => void;
+    };
 }
 
 export function SearchableSelect({
@@ -27,6 +31,7 @@ export function SearchableSelect({
     loading = false,
     disabled = false,
     emptyText = 'Sin opciones disponibles',
+    emptyAction,
 }: SearchableSelectProps) {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -157,7 +162,23 @@ export function SearchableSelect({
                                 Cargando...
                             </div>
                         ) : filtered.length === 0 ? (
-                            <div className="ss-empty">{emptyText}</div>
+                            <div className="ss-empty-wrap">
+                                <div className="ss-empty">{emptyText}</div>
+                                {emptyAction && search.trim() && (
+                                    <button
+                                        type="button"
+                                        className="ss-empty-action"
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            emptyAction.onClick(search.trim());
+                                        }}
+                                    >
+                                        {typeof emptyAction.label === 'function'
+                                            ? emptyAction.label(search.trim())
+                                            : emptyAction.label}
+                                    </button>
+                                )}
+                            </div>
                         ) : (
                             filtered.map((opt) => (
                                 <button

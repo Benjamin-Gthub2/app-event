@@ -11,7 +11,8 @@
       "Bash(xargs ls *)",
       "Bash(Select-Object -First 20 FullName)",
       "Bash(go build *)",
-      "PowerShell(go build *)"
+      "PowerShell(go build *)",
+      "Bash(findstr *)"
     ]
   }
 }

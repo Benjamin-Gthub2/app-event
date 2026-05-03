@@ -229,14 +229,42 @@
 }
 
 /* ── Empty / loading state ───────────────────────────────────────────────────── */
+.ss-empty-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .ss-empty {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 18px 12px;
+    padding: 14px 12px 8px;
     font-size: 13px;
     color: var(--ss-placeholder);
+}
+
+.ss-empty-action {
+    width: 100%;
+    padding: 9px 12px 12px;
+    border: none;
+    background: transparent;
+    color: var(--ss-border-focus);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.12s, color 0.12s;
+    border-top: 1px solid var(--ss-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.ss-empty-action:hover {
+    background: var(--ss-hover);
 }
 
 .ss-list-spinner {

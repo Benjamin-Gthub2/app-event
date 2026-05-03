@@ -92,7 +92,10 @@ function initials(names: string, surname: string) {
 
 function formatDate(iso: string | null) {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleString('es-PE', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    });
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────

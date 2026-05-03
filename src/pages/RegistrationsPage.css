@@ -925,6 +925,43 @@
     flex-shrink: 0;
 }
 
+/* ── Create person modal ─────────────────────────────────────────────────────── */
+.reg-create-person-modal {
+    max-width: 540px;
+}
+
+.reg-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.reg-form-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--reg-input-border);
+    border-radius: 8px;
+    background: var(--reg-input-bg);
+    color: var(--reg-text-primary);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    box-sizing: border-box;
+}
+
+.reg-form-input:focus {
+    border-color: var(--reg-input-focus);
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.12);
+}
+
+.reg-form-input::placeholder {
+    color: var(--reg-text-muted);
+}
+
+[data-theme="dark"] .reg-form-input:focus {
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .reg-header {
@@ -938,5 +975,9 @@
 
     .reg-header-right {
         width: 100%;
+    }
+
+    .reg-form-row {
+        grid-template-columns: 1fr;
     }
 }

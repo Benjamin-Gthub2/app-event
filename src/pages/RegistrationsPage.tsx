@@ -5,6 +5,7 @@ import { registrationStatusService } from '../services/registrationStatusService
 import { workshopService } from '../services/workshopService';
 import { sessionService } from '../services/sessionService';
 import { peopleService } from '../services/peopleService';
+import type { CreatePersonBody } from '../services/peopleService';
 import { SearchableSelect } from '../components/SearchableSelect';
 import type { Registration, Pagination, Status } from '../types/registration.types';
 import type { RegistrationStatus } from '../types/registrationStatus.types';
@@ -14,6 +15,20 @@ import type { Person } from '../types/people.types';
 import type { SelectOption } from '../components/SearchableSelect';
 import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import './RegistrationsPage.css';
+
+// ── Document types catalog (no dedicated endpoint exists) ──────────────────────
+const DOCUMENT_TYPES = [
+    { id: '00a58296-93b4-11ee-a040-0242ac11000e', label: 'DNI' },
+    { id: '00a58572-93b4-11ee-a040-0242ac11000e', label: 'PASAPORTE' },
+    { id: '00a584ae-93b4-11ee-a040-0242ac11000e', label: 'CARNÉ EXT.' },
+    { id: '00a58522-93b4-11ee-a040-0242ac11000e', label: 'RUC' },
+    { id: '00a585c3-93b4-11ee-a040-0242ac11000e', label: 'CARNÉ SOLIC. REFUGIO' },
+    { id: '00a58610-93b4-11ee-a040-0242ac11000e', label: 'PART. NAC.' },
+    { id: '00a58659-93b4-11ee-a040-0242ac11000e', label: 'C. IDENT.-RREE' },
+    { id: '00a586a3-93b4-11ee-a040-0242ac11000e', label: 'PTP' },
+    { id: '00a586f0-93b4-11ee-a040-0242ac11000e', label: 'DOC. ID. EXTR.' },
+    { id: '00a58739-93b4-11ee-a040-0242ac11000e', label: 'CPP' },
+];
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -94,8 +109,9 @@ function initials(names: string, surname: string) {
 
 function formatDate(iso: string | null) {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('es-PE', {
+    return new Date(iso).toLocaleString('es-PE', {
         day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
     });
 }
 
@@ -103,7 +119,10 @@ const PAGE_SIZE = 10;
 
 function formatDateShort(iso: string | null) {
     if (!iso) return '';
-    return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleString('es-PE', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    });
 }
 
 // ── Status cell ────────────────────────────────────────────────────────────────
@@ -198,6 +217,147 @@ function StatusLegend({ statuses }: { statuses: RegistrationStatus[] }) {
     );
 }
 
+// ── Create Person Modal ────────────────────────────────────────────────────────
+
+interface CreatePersonModalProps {
+    initialSearch: string;
+    onClose: () => void;
+    onCreated: (person: SelectOption) => void;
+}
+
+function CreatePersonModal({ initialSearch, onClose, onCreated }: CreatePersonModalProps) {
+    const [form, setForm] = useState<CreatePersonBody>({
+        names: '',
+        surname: '',
+        last_name: '',
+        type_document_id: DOCUMENT_TYPES[0].id,
+        document: initialSearch,
+        phone: '',
+        email: '',
+        gender: '',
+        enable: true,
+    });
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
+
+    const set = (field: keyof CreatePersonBody) =>
+        (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+            setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setFormError(null);
+        try {
+            const body: CreatePersonBody = {
+                ...form,
+                last_name: form.last_name || undefined,
+                phone: form.phone || undefined,
+                email: form.email || undefined,
+                gender: form.gender || undefined,
+            };
+            const newId = await peopleService.createPerson(body);
+            const docType = DOCUMENT_TYPES.find(d => d.id === form.type_document_id);
+            onCreated({
+                value: newId,
+                label: [form.names, form.surname, form.last_name].filter(Boolean).join(' '),
+                sublabel: `${docType?.label ?? ''} ${form.document}`.trim(),
+            });
+        } catch (err) {
+            setFormError(err instanceof Error ? err.message : 'Error al crear la persona.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="reg-modal-overlay">
+            <div className="reg-modal reg-form-modal reg-create-person-modal">
+                <div className="reg-modal-header">
+                    <div>
+                        <h3 className="reg-modal-title">Nueva Persona</h3>
+                        <p className="reg-modal-sub">Completa los datos para registrar al beneficiario</p>
+                    </div>
+                    <button className="reg-modal-close" onClick={onClose} type="button" aria-label="Cerrar">
+                        <IconClose />
+                    </button>
+                </div>
+
+                <form className="reg-form-body" onSubmit={handleSubmit}>
+                    {formError && (
+                        <div className="reg-form-alert">
+                            <IconAlert />
+                            {formError}
+                        </div>
+                    )}
+
+                    <div className="reg-form-row">
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Tipo de documento <span className="reg-required">*</span></label>
+                            <select className="reg-form-input" value={form.type_document_id} onChange={set('type_document_id')} required>
+                                {DOCUMENT_TYPES.map(d => (
+                                    <option key={d.id} value={d.id}>{d.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">N° de documento <span className="reg-required">*</span></label>
+                            <input className="reg-form-input" value={form.document} onChange={set('document')} required placeholder="Ej. 12345678" />
+                        </div>
+                    </div>
+
+                    <div className="reg-form-row">
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Nombres <span className="reg-required">*</span></label>
+                            <input className="reg-form-input" value={form.names} onChange={set('names')} required placeholder="Ej. Juan Carlos" />
+                        </div>
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Ap. Paterno <span className="reg-required">*</span></label>
+                            <input className="reg-form-input" value={form.surname} onChange={set('surname')} required placeholder="Ej. López" />
+                        </div>
+                    </div>
+
+                    <div className="reg-form-row">
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Ap. Materno</label>
+                            <input className="reg-form-input" value={form.last_name ?? ''} onChange={set('last_name')} placeholder="Ej. García" />
+                        </div>
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Género</label>
+                            <select className="reg-form-input" value={form.gender ?? ''} onChange={set('gender')}>
+                                <option value="">— Sin especificar —</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="O">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="reg-form-row">
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Teléfono</label>
+                            <input className="reg-form-input" value={form.phone ?? ''} onChange={set('phone')} placeholder="Ej. 987654321" />
+                        </div>
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">Correo electrónico</label>
+                            <input className="reg-form-input" type="email" value={form.email ?? ''} onChange={set('email')} placeholder="Ej. juan@correo.com" />
+                        </div>
+                    </div>
+
+                    <div className="reg-form-actions">
+                        <button type="button" className="reg-form-cancel" onClick={onClose} disabled={saving}>
+                            Cancelar
+                        </button>
+                        <button type="submit" className="reg-form-submit" disabled={saving}>
+                            {saving ? 'Guardando...' : 'Crear persona'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 // ── Add Registration Modal ─────────────────────────────────────────────────────
 
 interface AddRegistrationModalProps {
@@ -219,6 +379,7 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
     const [loadingPeople, setLoadingPeople] = useState(true);
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
+    const [createPersonSearch, setCreatePersonSearch] = useState<string | null>(null);
 
     useEffect(() => {
         workshopService.getWorkshops({ size_page: 100 })
@@ -283,93 +444,125 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
         }
     };
 
+    const handlePersonCreated = (newPerson: SelectOption) => {
+        setPeople(prev => [...prev, {
+            id: newPerson.value,
+            document: newPerson.sublabel?.split(' ').pop() ?? '',
+            names: newPerson.label.split(' ')[0] ?? '',
+            surname: newPerson.label.split(' ')[1] ?? '',
+            last_name: null,
+            phone: null,
+            email: null,
+            gender: null,
+            enable: true,
+            created_at: null,
+            document_type: { id: '', description: '', abbreviated_description: newPerson.sublabel?.split(' ')[0] ?? '' },
+        } as Person]);
+        setPersonId(newPerson.value);
+        setCreatePersonSearch(null);
+    };
+
     return (
-        <div className="reg-modal-overlay" onClick={onClose}>
-            <div className="reg-modal reg-form-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="reg-modal-header">
-                    <div>
-                        <h3 className="reg-modal-title">Nueva Inscripción</h3>
-                        <p className="reg-modal-sub">Completa los datos para registrar al asistente</p>
-                    </div>
-                    <button className="reg-modal-close" onClick={onClose} aria-label="Cerrar" type="button">
-                        <IconClose />
-                    </button>
-                </div>
-
-                <form className="reg-form-body" onSubmit={handleSubmit}>
-                    {formError && (
-                        <div className="reg-form-alert">
-                            <IconAlert />
-                            {formError}
+        <>
+            <div className="reg-modal-overlay" onClick={onClose}>
+                <div className="reg-modal reg-form-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="reg-modal-header">
+                        <div>
+                            <h3 className="reg-modal-title">Nueva Inscripción</h3>
+                            <p className="reg-modal-sub">Completa los datos para registrar al asistente</p>
                         </div>
-                    )}
-
-                    <div className="reg-form-field">
-                        <label className="reg-form-label">
-                            Taller <span className="reg-required">*</span>
-                        </label>
-                        <SearchableSelect
-                            options={workshopOptions}
-                            value={workshopId}
-                            onChange={(v) => setWorkshopId(v)}
-                            placeholder="Seleccionar taller..."
-                            searchPlaceholder="Buscar taller..."
-                            loading={loadingWorkshops}
-                            emptyText="Sin talleres disponibles"
-                        />
-                    </div>
-
-                    <div className="reg-form-field">
-                        <label className="reg-form-label">
-                            Sesión <span className="reg-required">*</span>
-                        </label>
-                        <SearchableSelect
-                            options={sessionOptions}
-                            value={sessionId}
-                            onChange={(v) => setSessionId(v)}
-                            placeholder={workshopId ? 'Seleccionar sesión...' : 'Primero selecciona un taller'}
-                            searchPlaceholder="Buscar sesión..."
-                            loading={loadingSessions}
-                            disabled={!workshopId}
-                            emptyText="Sin sesiones para este taller"
-                        />
-                    </div>
-
-                    <div className="reg-form-field">
-                        <label className="reg-form-label">
-                            Beneficiario <span className="reg-required">*</span>
-                        </label>
-                        <SearchableSelect
-                            options={personOptions}
-                            value={personId}
-                            onChange={(v) => setPersonId(v)}
-                            placeholder="Seleccionar beneficiario..."
-                            searchPlaceholder="Buscar por nombre o documento..."
-                            loading={loadingPeople}
-                            emptyText="Sin personas disponibles"
-                        />
-                    </div>
-
-                    <div className="reg-form-actions">
-                        <button
-                            type="button"
-                            className="reg-form-cancel"
-                            onClick={onClose}
-                            disabled={saving}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            className="reg-form-submit"
-                            disabled={!sessionId || !personId || saving}
-                        >
-                            {saving ? 'Guardando...' : 'Guardar'}
+                        <button className="reg-modal-close" onClick={onClose} aria-label="Cerrar" type="button">
+                            <IconClose />
                         </button>
                     </div>
-                </form>
+
+                    <form className="reg-form-body" onSubmit={handleSubmit}>
+                        {formError && (
+                            <div className="reg-form-alert">
+                                <IconAlert />
+                                {formError}
+                            </div>
+                        )}
+
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">
+                                Taller <span className="reg-required">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={workshopOptions}
+                                value={workshopId}
+                                onChange={(v) => setWorkshopId(v)}
+                                placeholder="Seleccionar taller..."
+                                searchPlaceholder="Buscar taller..."
+                                loading={loadingWorkshops}
+                                emptyText="Sin talleres disponibles"
+                            />
+                        </div>
+
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">
+                                Sesión <span className="reg-required">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={sessionOptions}
+                                value={sessionId}
+                                onChange={(v) => setSessionId(v)}
+                                placeholder={workshopId ? 'Seleccionar sesión...' : 'Primero selecciona un taller'}
+                                searchPlaceholder="Buscar sesión..."
+                                loading={loadingSessions}
+                                disabled={!workshopId}
+                                emptyText="Sin sesiones para este taller"
+                            />
+                        </div>
+
+                        <div className="reg-form-field">
+                            <label className="reg-form-label">
+                                Beneficiario <span className="reg-required">*</span>
+                            </label>
+                            <SearchableSelect
+                                options={personOptions}
+                                value={personId}
+                                onChange={(v) => setPersonId(v)}
+                                placeholder="Seleccionar beneficiario..."
+                                searchPlaceholder="Buscar por nombre o documento..."
+                                loading={loadingPeople}
+                                emptyText="No se encontró ninguna persona"
+                                emptyAction={{
+                                    label: (s) => `¿No está en la lista? Crear "${s}"`,
+                                    onClick: (s) => setCreatePersonSearch(s),
+                                }}
+                            />
+                        </div>
+
+                        <div className="reg-form-actions">
+                            <button
+                                type="button"
+                                className="reg-form-cancel"
+                                onClick={onClose}
+                                disabled={saving}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="reg-form-submit"
+                                disabled={!sessionId || !personId || saving}
+                            >
+                                {saving ? 'Guardando...' : 'Guardar'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+
+            {createPersonSearch !== null && (
+                <CreatePersonModal
+                    initialSearch={createPersonSearch}
+                    onClose={() => setCreatePersonSearch(null)}
+                    onCreated={handlePersonCreated}
+                />
+            )}
+        </>
     );
 }
 
