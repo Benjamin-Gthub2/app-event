@@ -47,6 +47,10 @@ export const registrationService = {
         return res.data;
     },
 
+    async updateRegistrationStatus(registrationId: string, statusCode: string): Promise<void> {
+        await apiClient.put<unknown>(`/event/registrations/${registrationId}/statuses/${statusCode}`, {});
+    },
+
     async getQrBlobUrl(id: string): Promise<string> {
         const token = localStorage.getItem('auth_token');
         const tenantId = localStorage.getItem('x_tenant_id');

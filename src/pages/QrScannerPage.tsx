@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import QrScanner from '../components/QrScanner';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { registrationService } from '../services/registrationService';
-import type { Registration } from '../types/registration.types';
+import { registrationStatusService } from '../services/registrationStatusService';
+import type { Registration, Status } from '../types/registration.types';
+import type { RegistrationStatus } from '../types/registrationStatus.types';
 import './QrScannerPage.css';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -27,11 +29,106 @@ type ScanState =
     | { status: 'notfound'; id: string }
     | { status: 'error'; message: string };
 
+// ── StatusChanger sub-component ────────────────────────────────────────────────
+
+interface StatusChangerProps {
+    registration: Registration;
+    allStatuses: RegistrationStatus[];
+    onStatusUpdated: (newStatus: Status) => void;
+}
+
+const StatusChanger: React.FC<StatusChangerProps> = ({ registration, allStatuses, onStatusUpdated }) => {
+    const nextStatuses = allStatuses
+        .filter(s => s.enable && s.position > registration.status.position)
+        .sort((a, b) => a.position - b.position)
+        .slice(0, 1);
+
+    const [selected, setSelected] = useState(nextStatuses[0]?.code ?? '');
+    const [updating, setUpdating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [done, setDone] = useState(false);
+
+    if (nextStatuses.length === 0) {
+        return (
+            <div className="qr-status-final">
+                <span className="qr-status-dot qr-status-dot--final" />
+                Estado final alcanzado
+            </div>
+        );
+    }
+
+    if (done) {
+        return (
+            <div className="qr-status-updated">
+                Estado actualizado correctamente
+            </div>
+        );
+    }
+
+    const handleUpdate = async () => {
+        if (!selected) return;
+        setUpdating(true);
+        setError(null);
+        try {
+            await registrationService.updateRegistrationStatus(registration.id, selected);
+            const matched = allStatuses.find(s => s.code === selected)!;
+            onStatusUpdated({
+                id: matched.id,
+                code: matched.code,
+                description: matched.description,
+                position: matched.position,
+                enable: matched.enable,
+                created_at: matched.created_at,
+            });
+            setDone(true);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Error al actualizar estado');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    return (
+        <div className="qr-status-changer">
+            <p className="qr-label">Cambiar estado</p>
+            <select
+                className="qr-status-select"
+                value={selected}
+                onChange={e => setSelected(e.target.value)}
+                disabled={updating}
+            >
+                {nextStatuses.map(s => (
+                    <option key={s.code} value={s.code}>{s.description}</option>
+                ))}
+            </select>
+            {error && <p className="qr-status-error">{error}</p>}
+            <button
+                className="qr-btn-update"
+                onClick={handleUpdate}
+                disabled={updating || !selected}
+            >
+                {updating
+                    ? <><span className="qr-spinner qr-spinner--sm" /> Actualizando...</>
+                    : 'Confirmar cambio'
+                }
+            </button>
+        </div>
+    );
+};
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 const QrScannerPage: React.FC = () => {
     const [scanKey, setScanKey] = useState(0);
     const [state, setState] = useState<ScanState>({ status: 'idle' });
+    const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
+
+    useEffect(() => {
+        registrationStatusService
+            .getRegistrationStatuses({ size_page: 50 })
+            .then(res => setAllStatuses(res.data))
+            .catch(() => {/* non-blocking, status changer won't render */});
+    }, []);
 
     const handleScan = async (id: string) => {
         setState({ status: 'loading', id });
@@ -53,6 +150,14 @@ const QrScannerPage: React.FC = () => {
     const handleReset = () => {
         setState({ status: 'idle' });
         setScanKey(k => k + 1);
+    };
+
+    const handleStatusUpdated = (newStatus: Status) => {
+        if (state.status !== 'found') return;
+        setState({
+            status: 'found',
+            registration: { ...state.registration, status: newStatus },
+        });
     };
 
     // ── Loading ──────────────────────────────────────────────────────────────
@@ -115,6 +220,22 @@ const QrScannerPage: React.FC = () => {
                                 <span className="qr-val">{formatDate(s.end_date)}</span>
                             </div>
                         </div>
+
+                        <div className="qr-detail-box">
+                            <p className="qr-label">Estado actual</p>
+                            <div className="qr-row">
+                                <span className="qr-key">Estado</span>
+                                <span className="qr-status-badge">{r.status.description}</span>
+                            </div>
+                        </div>
+
+                        {allStatuses.length > 0 && (
+                            <StatusChanger
+                                registration={r}
+                                allStatuses={allStatuses}
+                                onStatusUpdated={handleStatusUpdated}
+                            />
+                        )}
 
                         <div className="qr-detail-box">
                             <p className="qr-label">Registrado por</p>
