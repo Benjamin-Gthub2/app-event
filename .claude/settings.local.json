@@ -5,7 +5,10 @@
       "Bash(npx tsc *)",
       "Bash(xargs grep *)",
       "Bash(npm install *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Select-Object -First 50)",
+      "Bash(xargs ls *)"
     ]
   }
 }
