@@ -45,6 +45,15 @@ export interface Session {
     work_shop: WorkShop;
 }
 
+export interface Status {
+    id: string;
+    code: string;
+    description: string;
+    position: number;
+    enable: boolean;
+    created_at: string | null;
+}
+
 export interface CreatedBy {
     id: string;
     user: User;
@@ -58,6 +67,7 @@ export interface CreatedBy {
 export interface Registration {
     id: string;
     created_at: string | null;
+    status:Status;
     session: Session;
     beneficiary: Beneficiary;
     created_by: CreatedBy;
