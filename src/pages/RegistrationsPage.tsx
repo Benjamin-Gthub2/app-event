@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { registrationService } from '../services/registrationService';
+import { registrationStatusService } from '../services/registrationStatusService';
 import { workshopService } from '../services/workshopService';
 import { sessionService } from '../services/sessionService';
 import { peopleService } from '../services/peopleService';
 import { SearchableSelect } from '../components/SearchableSelect';
-import type { Registration, Pagination } from '../types/registration.types';
+import type { Registration, Pagination, Status } from '../types/registration.types';
+import type { RegistrationStatus } from '../types/registrationStatus.types';
 import type { Workshop } from '../types/workshop.types';
 import type { Session } from '../types/session.types';
 import type { Person } from '../types/people.types';
@@ -102,6 +104,85 @@ const PAGE_SIZE = 10;
 function formatDateShort(iso: string | null) {
     if (!iso) return '';
     return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── Status cell ────────────────────────────────────────────────────────────────
+
+interface StatusCellProps {
+    registration: Registration;
+    allStatuses: RegistrationStatus[];
+    onUpdated: (registrationId: string, newStatus: Status) => void;
+}
+
+function StatusCell({ registration, allStatuses, onUpdated }: StatusCellProps) {
+    const [editing, setEditing] = useState(false);
+    const [updating, setUpdating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const nextStatus = allStatuses
+        .filter(s => s.enable && s.position > registration.status.position)
+        .sort((a, b) => a.position - b.position)[0] ?? null;
+
+    const handleConfirm = async () => {
+        if (!nextStatus) return;
+        setUpdating(true);
+        setError(null);
+        try {
+            await registrationService.updateRegistrationStatus(registration.id, nextStatus.code);
+            onUpdated(registration.id, {
+                id: nextStatus.id,
+                code: nextStatus.code,
+                description: nextStatus.description,
+                position: nextStatus.position,
+                enable: nextStatus.enable,
+                created_at: nextStatus.created_at,
+            });
+            setEditing(false);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Error');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    if (updating) {
+        return (
+            <div className="reg-status-cell">
+                <span className="reg-status-spinner" />
+            </div>
+        );
+    }
+
+    if (editing && nextStatus) {
+        return (
+            <div className="reg-status-cell reg-status-cell--editing">
+                <span className="reg-status-arrow">→</span>
+                <span className={`reg-status-pill reg-status-pill--${nextStatus.code.toLowerCase()}`}>
+                    {nextStatus.description}
+                </span>
+                <button className="reg-status-confirm" onClick={handleConfirm} title="Confirmar">✓</button>
+                <button className="reg-status-cancel-btn" onClick={() => { setEditing(false); setError(null); }} title="Cancelar">✕</button>
+                {error && <span className="reg-status-error-inline" title={error}>!</span>}
+            </div>
+        );
+    }
+
+    return (
+        <div className="reg-status-cell">
+            <span className={`reg-status-pill reg-status-pill--${registration.status.code.toLowerCase()}`}>
+                {registration.status.description}
+            </span>
+            {nextStatus && (
+                <button
+                    className="reg-status-advance-btn"
+                    onClick={() => setEditing(true)}
+                    title={`Cambiar a ${nextStatus.description}`}
+                >
+                    ↑
+                </button>
+            )}
+        </div>
+    );
 }
 
 // ── Add Registration Modal ─────────────────────────────────────────────────────
@@ -372,6 +453,14 @@ export default function RegistrationsPage() {
     const [search, setSearch] = useState('');
     const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
     const [addModal, setAddModal] = useState(false);
+    const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
+
+    useEffect(() => {
+        registrationStatusService
+            .getRegistrationStatuses({ size_page: 50 })
+            .then(res => setAllStatuses(res.data))
+            .catch(() => {/* non-blocking */});
+    }, []);
 
     const fetchData = useCallback(async (targetPage: number) => {
         setLoading(true);
@@ -392,6 +481,12 @@ export default function RegistrationsPage() {
     useEffect(() => {
         fetchData(page);
     }, [fetchData, page]);
+
+    const handleStatusUpdated = (registrationId: string, newStatus: Status) => {
+        setRows(prev => prev.map(r =>
+            r.id === registrationId ? { ...r, status: newStatus } : r
+        ));
+    };
 
     const filtered = search.trim()
         ? rows.filter((r) => {
@@ -417,6 +512,8 @@ export default function RegistrationsPage() {
         for (let i = start; i <= end; i++) pages.push(i);
         return pages;
     };
+
+    const COLS = 9;
 
     return (
         <DashboardLayout title="Inscripciones">
@@ -477,6 +574,7 @@ export default function RegistrationsPage() {
                                 <th>Documento</th>
                                 <th>Taller</th>
                                 <th>Sesión</th>
+                                <th>Estado</th>
                                 <th>Registrado por</th>
                                 <th>Fecha</th>
                                 <th>QR</th>
@@ -486,7 +584,7 @@ export default function RegistrationsPage() {
                             {loading && rows.length === 0 ? (
                                 Array.from({ length: 6 }).map((_, i) => (
                                     <tr key={i}>
-                                        {Array.from({ length: 8 }).map((_, j) => (
+                                        {Array.from({ length: COLS }).map((_, j) => (
                                             <td key={j}>
                                                 <span className="reg-skeleton" style={{ width: `${60 + (j * 13) % 60}px` }} />
                                             </td>
@@ -495,7 +593,7 @@ export default function RegistrationsPage() {
                                 ))
                             ) : filtered.length === 0 ? (
                                 <tr className="reg-state-row">
-                                    <td colSpan={8}>
+                                    <td colSpan={COLS}>
                                         <div className="reg-state-icon"><IconUsers /></div>
                                         <p className="reg-state-title">
                                             {search ? 'Sin resultados' : 'Sin inscripciones'}
@@ -545,6 +643,13 @@ export default function RegistrationsPage() {
                                                 <div className="reg-date" style={{ fontSize: 11 }}>
                                                     {formatDate(reg.session.end_date)}
                                                 </div>
+                                            </td>
+                                            <td>
+                                                <StatusCell
+                                                    registration={reg}
+                                                    allStatuses={allStatuses}
+                                                    onUpdated={handleStatusUpdated}
+                                                />
                                             </td>
                                             <td style={{ color: 'var(--reg-text-secondary)' }}>
                                                 {fullName(cb.names, cb.surname, cb.last_name)}

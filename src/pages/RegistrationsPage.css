@@ -728,6 +728,159 @@
     50%       { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.10); }
 }
 
+/* ── Status cell ─────────────────────────────────────────────────────────────── */
+.reg-status-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.reg-status-cell--editing {
+    gap: 4px;
+}
+
+/* Status pills — one color per code */
+.reg-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+.reg-status-pill--registered {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+[data-theme="dark"] .reg-status-pill--registered {
+    background: #1e1b4b;
+    color: #a5b4fc;
+}
+
+.reg-status-pill--paid {
+    background: #fef3c7;
+    color: #92400e;
+}
+[data-theme="dark"] .reg-status-pill--paid {
+    background: #2d1f00;
+    color: #fbbf24;
+}
+
+.reg-status-pill--received {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+[data-theme="dark"] .reg-status-pill--received {
+    background: #042f2e;
+    color: #2dd4bf;
+}
+
+.reg-status-pill--attended {
+    background: #dcfce7;
+    color: #15803d;
+}
+[data-theme="dark"] .reg-status-pill--attended {
+    background: #052e16;
+    color: #4ade80;
+}
+
+/* Advance button — shown next to badge when a next status exists */
+.reg-status-advance-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--reg-input-border);
+    border-radius: 5px;
+    background: var(--reg-page-btn-bg);
+    color: var(--reg-text-muted);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    padding: 0;
+    flex-shrink: 0;
+}
+.reg-status-advance-btn:hover {
+    background: var(--reg-btn-primary);
+    color: #fff;
+    border-color: var(--reg-btn-primary);
+}
+
+/* Arrow shown when editing */
+.reg-status-arrow {
+    font-size: 12px;
+    color: var(--reg-text-muted);
+}
+
+/* Confirm / cancel micro-buttons */
+.reg-status-confirm,
+.reg-status-cancel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.reg-status-confirm {
+    background: #16a34a;
+    color: #fff;
+}
+.reg-status-confirm:hover {
+    background: #15803d;
+}
+
+.reg-status-cancel-btn {
+    background: var(--reg-page-btn-bg);
+    color: var(--reg-text-muted);
+}
+.reg-status-cancel-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* Error indicator */
+.reg-status-error-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    cursor: default;
+}
+
+/* Updating spinner inside status cell */
+.reg-status-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--reg-divider);
+    border-top-color: var(--reg-btn-primary);
+    border-radius: 50%;
+    animation: reg-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .reg-header {
