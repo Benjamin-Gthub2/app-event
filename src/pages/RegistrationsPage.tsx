@@ -115,7 +115,6 @@ interface StatusCellProps {
 }
 
 function StatusCell({ registration, allStatuses, onUpdated }: StatusCellProps) {
-    const [editing, setEditing] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -123,21 +122,22 @@ function StatusCell({ registration, allStatuses, onUpdated }: StatusCellProps) {
         .filter(s => s.enable && s.position > registration.status.position)
         .sort((a, b) => a.position - b.position)[0] ?? null;
 
-    const handleConfirm = async () => {
-        if (!nextStatus) return;
+    const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        if (code === registration.status.code || updating) return;
         setUpdating(true);
         setError(null);
         try {
-            await registrationService.updateRegistrationStatus(registration.id, nextStatus.code);
+            await registrationService.updateRegistrationStatus(registration.id, code);
+            const matched = allStatuses.find(s => s.code === code)!;
             onUpdated(registration.id, {
-                id: nextStatus.id,
-                code: nextStatus.code,
-                description: nextStatus.description,
-                position: nextStatus.position,
-                enable: nextStatus.enable,
-                created_at: nextStatus.created_at,
+                id: matched.id,
+                code: matched.code,
+                description: matched.description,
+                position: matched.position,
+                enable: matched.enable,
+                created_at: matched.created_at,
             });
-            setEditing(false);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error');
         } finally {
@@ -145,42 +145,55 @@ function StatusCell({ registration, allStatuses, onUpdated }: StatusCellProps) {
         }
     };
 
-    if (updating) {
-        return (
-            <div className="reg-status-cell">
-                <span className="reg-status-spinner" />
-            </div>
-        );
-    }
-
-    if (editing && nextStatus) {
-        return (
-            <div className="reg-status-cell reg-status-cell--editing">
-                <span className="reg-status-arrow">→</span>
-                <span className={`reg-status-pill reg-status-pill--${nextStatus.code.toLowerCase()}`}>
-                    {nextStatus.description}
-                </span>
-                <button className="reg-status-confirm" onClick={handleConfirm} title="Confirmar">✓</button>
-                <button className="reg-status-cancel-btn" onClick={() => { setEditing(false); setError(null); }} title="Cancelar">✕</button>
-                {error && <span className="reg-status-error-inline" title={error}>!</span>}
-            </div>
-        );
-    }
+    const isDisabled = updating || !nextStatus;
+    const colorKey = registration.status.code.toLowerCase();
 
     return (
         <div className="reg-status-cell">
-            <span className={`reg-status-pill reg-status-pill--${registration.status.code.toLowerCase()}`}>
-                {registration.status.description}
-            </span>
-            {nextStatus && (
-                <button
-                    className="reg-status-advance-btn"
-                    onClick={() => setEditing(true)}
-                    title={`Cambiar a ${nextStatus.description}`}
+            <div className={`reg-status-select-wrap reg-status-select-wrap--${colorKey}${isDisabled ? ' reg-status-select-wrap--disabled' : ''}`}>
+                <select
+                    className="reg-status-select"
+                    value={registration.status.code}
+                    onChange={handleChange}
+                    disabled={isDisabled}
                 >
-                    ↑
-                </button>
-            )}
+                    <option value={registration.status.code}>{registration.status.description}</option>
+                    {nextStatus && (
+                        <option value={nextStatus.code}>{nextStatus.description}</option>
+                    )}
+                </select>
+            </div>
+            {updating && <span className="reg-status-spinner" />}
+            {error && !updating && <span className="reg-status-error-inline" title={error}>!</span>}
+        </div>
+    );
+}
+
+// ── Status legend ──────────────────────────────────────────────────────────────
+
+function StatusLegend({ statuses }: { statuses: RegistrationStatus[] }) {
+    if (statuses.length === 0) return null;
+
+    const sorted = [...statuses]
+        .filter(s => s.enable)
+        .sort((a, b) => a.position - b.position);
+
+    return (
+        <div className="reg-legend">
+            <span className="reg-legend-label">Flujo de estados</span>
+            <div className="reg-legend-flow">
+                {sorted.map((s, i) => (
+                    <span key={s.code} className="reg-legend-item">
+                        <span className={`reg-legend-pill reg-legend-pill--${s.code.toLowerCase()}`}>
+                            <span className="reg-legend-pos">{s.position}</span>
+                            {s.description}
+                        </span>
+                        {i < sorted.length - 1 && (
+                            <span className="reg-legend-arrow">→</span>
+                        )}
+                    </span>
+                ))}
+            </div>
         </div>
     );
 }
@@ -560,6 +573,9 @@ export default function RegistrationsPage() {
                     {error}
                 </div>
             )}
+
+            {/* Status legend */}
+            <StatusLegend statuses={allStatuses} />
 
             {/* Table card */}
             <div className="reg-card">
