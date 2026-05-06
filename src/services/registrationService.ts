@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, API_BASE } from './apiClient';
 import type { Registration, RegistrationsResponse } from '../types/registration.types';
 
 export interface GetRegistrationsParams {
@@ -58,7 +58,7 @@ export const registrationService = {
         if (token) headers['Authorization'] = `Bearer ${token}`;
         if (tenantId) headers['X-Tenant-Id'] = tenantId;
 
-        const response = await fetch(`/api/v1/event/registrations/${id}/qr`, { headers });
+        const response = await fetch(`${API_BASE}/event/registrations/${id}/qr`, { headers });
         if (!response.ok) throw new Error(`Error ${response.status}`);
         const blob = await response.blob();
         return URL.createObjectURL(blob);

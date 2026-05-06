@@ -1,4 +1,4 @@
-const API_BASE = '/api/v1';
+export const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1`;
 const TENANT_KEY = 'x_tenant_id';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
