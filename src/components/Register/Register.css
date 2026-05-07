@@ -164,40 +164,6 @@
     box-shadow: 0 0 0 3px rgba(67, 179, 196, 0.18);
 }
 
-/* ─── Campo contraseña con ojito ──────────────────────────────────────────── */
-.password-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-wrap input {
-    padding-right: 42px;
-}
-
-.password-toggle {
-    position: absolute;
-    right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: none;
-    border: none;
-    border-radius: 6px;
-    color: var(--input-placeholder);
-    cursor: pointer;
-    padding: 0;
-    transition: color 0.18s, background-color 0.18s;
-    flex-shrink: 0;
-}
-
-.password-toggle:hover {
-    color: var(--input-border-focus);
-    background-color: rgba(67, 179, 196, 0.1);
-}
-
 /* ─── Botón principal ─────────────────────────────────────────────────────── */
 .login-button {
     width: 100%;
@@ -259,19 +225,5 @@
 }
 
 .login-footer a:hover {
-    text-decoration: underline;
-}
-
-.link-button {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--link-color);
-    font-size: 13px;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.link-button:hover {
     text-decoration: underline;
 }

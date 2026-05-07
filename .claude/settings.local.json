@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(xargs grep *)",
+      "Bash(npm install *)",
+      "Bash(npm list *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Select-Object -First 50)",
+      "Bash(xargs ls *)",
+      "Bash(Select-Object -First 20 FullName)",
+      "Bash(go build *)",
+      "PowerShell(go build *)",
+      "Bash(findstr *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event\" -Force | Select-Object Name, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\){\"DIR\"}else{\"FILE\"}}} | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event\\\\users\\\\infrastructure\\\\persistence\\\\mysql\" | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event\\\\users\\\\interfaces\\\\rest\" | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event\" -Directory | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event\" -File | ForEach-Object { $_.Name })",
+      "PowerShell(Get-Content *)",
+      "PowerShell(go mod *)"
+    ]
+  }
+}
