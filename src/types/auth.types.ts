@@ -5,19 +5,18 @@ export interface User {
     role?: string;
 }
 
-export interface AuthResponse {
-    user: User;
-    token: string;
+// Respuesta real del backend: POST /api/v1/auth/login
+export interface LoginApiResponse {
+    data: string; // JWT token
+    status: number;
 }
 
 export interface AuthState {
-    user: User | null;
     token: string | null;
     isAuthenticated: boolean;
-    isLoading: boolean;
 }
 
 export interface LoginCredentials {
-    email: string;
+    username: string; // el backend espera "username", no "email"
     password: string;
 }
