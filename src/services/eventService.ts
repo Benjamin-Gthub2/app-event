@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Event, EventsResponse, EventRolesResponse, EventSummaryResponse } from '../types/event.types';
+import type { EventsResponse, EventRolesResponse, EventSummaryResponse } from '../types/event.types';
 
 export interface GetEventsParams {
     page?: number;

@@ -16,6 +16,5 @@ export default defineConfig({
       },
     },
     host: true, // Acepta conexiones externas
-    https: true, // Fuerza el uso de HTTPS
   },
 })

@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Person, PeopleResponse } from '../types/people.types';
+import type { PeopleResponse } from '../types/people.types';
 
 export interface GetPeopleParams {
     page?: number;
