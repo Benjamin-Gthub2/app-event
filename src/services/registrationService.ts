@@ -10,7 +10,7 @@ export interface GetRegistrationsParams {
 }
 
 export interface CreateRegistrationBody {
-    session_id: string;
+    event_id: string;
     beneficiary_id: string;
 }
 

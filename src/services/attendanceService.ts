@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Attendance, AttendancesResponse } from '../types/attendance.types';
+import type { Attendance, AttendancesResponse, CreateAttendanceBody } from '../types/attendance.types';
 
 export interface GetAttendancesParams {
     page?: number;
@@ -29,8 +29,8 @@ export const attendanceService = {
         return res.data;
     },
 
-    async createAttendance(): Promise<string> {
-        const res = await apiClient.post<{ data: string; status: number }>('/event/attendances', {});
+    async createAttendance(body: CreateAttendanceBody): Promise<string> {
+        const res = await apiClient.post<{ data: string; status: number }>('/event/attendances', body);
         return res.data;
     },
 

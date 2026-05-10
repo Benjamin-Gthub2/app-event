@@ -32,17 +32,11 @@ export interface Beneficiary {
     last_name: string | null;
 }
 
-export interface WorkShop {
+export interface RegistrationEvent {
     id: string;
     name: string;
-}
-
-export interface Session {
-    id: string;
-    start_date: string | null;
-    end_date: string | null;
+    description: string;
     created_at: string | null;
-    work_shop: WorkShop;
 }
 
 export interface Status {
@@ -67,8 +61,8 @@ export interface CreatedBy {
 export interface Registration {
     id: string;
     created_at: string | null;
-    status:Status;
-    session: Session;
+    status: Status;
+    event: RegistrationEvent;
     beneficiary: Beneficiary;
     created_by: CreatedBy;
 }

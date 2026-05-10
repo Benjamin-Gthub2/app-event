@@ -52,7 +52,7 @@ const MODULES = [
     {
         id: 'qr',
         title: 'Escáner QR',
-        description: 'Escanea los códigos QR de los asistentes para validar su acceso al evento.',
+        description: 'Escanea los códigos QR de los asistentes para validar su acceso al taller.',
         icon: <IconQr />,
         path: '/qr-scanner',
         color: '#43b3c4',
@@ -62,8 +62,8 @@ const MODULES = [
     },
     {
         id: 'asistentes',
-        title: 'Asistentes',
-        description: 'Consulta y gestiona la lista completa de asistentes registrados.',
+        title: 'Inscripciones',
+        description: 'Consulta y gestiona la lista completa de las inscripciones registradas.',
         icon: <IconUsers />,
         path: '/asistentes',
         color: '#48bb78',

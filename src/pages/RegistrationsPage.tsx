@@ -2,15 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { registrationService } from '../services/registrationService';
 import { registrationStatusService } from '../services/registrationStatusService';
-import { workshopService } from '../services/workshopService';
-import { sessionService } from '../services/sessionService';
+import { eventService } from '../services/eventService';
 import { peopleService } from '../services/peopleService';
 import type { CreatePersonBody } from '../services/peopleService';
 import { SearchableSelect } from '../components/SearchableSelect';
 import type { Registration, Pagination, Status } from '../types/registration.types';
 import type { RegistrationStatus } from '../types/registrationStatus.types';
-import type { Workshop } from '../types/workshop.types';
-import type { Session } from '../types/session.types';
+import type { Event } from '../types/event.types';
 import type { Person } from '../types/people.types';
 import type { SelectOption } from '../components/SearchableSelect';
 import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
@@ -116,14 +114,6 @@ function formatDate(iso: string | null) {
 }
 
 const PAGE_SIZE = 10;
-
-function formatDateShort(iso: string | null) {
-    if (!iso) return '';
-    return new Date(iso).toLocaleString('es-PE', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-    });
-}
 
 // ── Status cell ────────────────────────────────────────────────────────────────
 
@@ -438,26 +428,23 @@ interface AddRegistrationModalProps {
 }
 
 function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps) {
-    const [workshopId, setWorkshopId] = useState('');
-    const [sessionId, setSessionId] = useState('');
+    const [eventId, setEventId] = useState('');
     const [personId, setPersonId] = useState('');
 
-    const [workshops, setWorkshops] = useState<Workshop[]>([]);
-    const [sessions, setSessions] = useState<Session[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     const [people, setPeople] = useState<Person[]>([]);
 
-    const [loadingWorkshops, setLoadingWorkshops] = useState(true);
-    const [loadingSessions, setLoadingSessions] = useState(false);
+    const [loadingEvents, setLoadingEvents] = useState(true);
     const [loadingPeople, setLoadingPeople] = useState(true);
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
     const [createPersonSearch, setCreatePersonSearch] = useState<string | null>(null);
 
     useEffect(() => {
-        workshopService.getWorkshops({ size_page: 100 })
-            .then((res) => setWorkshops(res.data ?? []))
-            .catch(() => setWorkshops([]))
-            .finally(() => setLoadingWorkshops(false));
+        eventService.getEvents({ size_page: 100 })
+            .then((res) => setEvents(res.data ?? []))
+            .catch(() => setEvents([]))
+            .finally(() => setLoadingEvents(false));
 
         peopleService.getPeople({ size_page: 100 })
             .then((res) => setPeople(res.data ?? []))
@@ -465,35 +452,11 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
             .finally(() => setLoadingPeople(false));
     }, []);
 
-    useEffect(() => {
-        if (!workshopId) {
-            setSessions([]);
-            setSessionId('');
-            return;
-        }
-        setLoadingSessions(true);
-        setSessionId('');
-        sessionService.getSessions({ workshop_id: workshopId, size_page: 100 })
-            .then((res) => setSessions(res.data ?? []))
-            .catch(() => setSessions([]))
-            .finally(() => setLoadingSessions(false));
-    }, [workshopId]);
-
-    const workshopOptions: SelectOption[] = workshops.map((w) => ({
-        value: w.id,
-        label: w.name,
-        sublabel: w.code ?? undefined,
+    const eventOptions: SelectOption[] = events.map((e) => ({
+        value: e.id,
+        label: e.name,
+        sublabel: e.code ?? undefined,
     }));
-
-    const sessionOptions: SelectOption[] = sessions.map((s) => {
-        const start = formatDateShort(s.start_date);
-        const end = formatDateShort(s.end_date);
-        return {
-            value: s.id,
-            label: start || 'Sesión',
-            sublabel: end ? `hasta ${end}` : undefined,
-        };
-    });
 
     const personOptions: SelectOption[] = people.map((p) => ({
         value: p.id,
@@ -503,11 +466,11 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!sessionId || !personId) return;
+        if (!eventId || !personId) return;
         setSaving(true);
         setFormError(null);
         try {
-            await registrationService.createRegistration({ session_id: sessionId, beneficiary_id: personId });
+            await registrationService.createRegistration({ event_id: eventId, beneficiary_id: personId });
             onSuccess();
         } catch (err) {
             setFormError(err instanceof Error ? err.message : 'Error al guardar la inscripción.');
@@ -558,32 +521,16 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
 
                         <div className="reg-form-field">
                             <label className="reg-form-label">
-                                Taller <span className="reg-required">*</span>
+                                Evento <span className="reg-required">*</span>
                             </label>
                             <SearchableSelect
-                                options={workshopOptions}
-                                value={workshopId}
-                                onChange={(v) => setWorkshopId(v)}
-                                placeholder="Seleccionar taller..."
-                                searchPlaceholder="Buscar taller..."
-                                loading={loadingWorkshops}
-                                emptyText="Sin talleres disponibles"
-                            />
-                        </div>
-
-                        <div className="reg-form-field">
-                            <label className="reg-form-label">
-                                Sesión <span className="reg-required">*</span>
-                            </label>
-                            <SearchableSelect
-                                options={sessionOptions}
-                                value={sessionId}
-                                onChange={(v) => setSessionId(v)}
-                                placeholder={workshopId ? 'Seleccionar sesión...' : 'Primero selecciona un taller'}
-                                searchPlaceholder="Buscar sesión..."
-                                loading={loadingSessions}
-                                disabled={!workshopId}
-                                emptyText="Sin sesiones para este taller"
+                                options={eventOptions}
+                                value={eventId}
+                                onChange={(v) => setEventId(v)}
+                                placeholder="Seleccionar evento..."
+                                searchPlaceholder="Buscar evento..."
+                                loading={loadingEvents}
+                                emptyText="Sin eventos disponibles"
                             />
                         </div>
 
@@ -618,7 +565,7 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
                             <button
                                 type="submit"
                                 className="reg-form-submit"
-                                disabled={!sessionId || !personId || saving}
+                                disabled={!eventId || !personId || saving}
                             >
                                 {saving ? 'Guardando...' : 'Guardar'}
                             </button>
@@ -770,9 +717,9 @@ export default function RegistrationsPage() {
         ? rows.filter((r) => {
             const name = fullName(r.beneficiary.names, r.beneficiary.surname, r.beneficiary.last_name).toLowerCase();
             const doc = r.beneficiary.document.toLowerCase();
-            const workshop = r.session.work_shop.name.toLowerCase();
+            const eventName = r.event.name.toLowerCase();
             const q = search.toLowerCase();
-            return name.includes(q) || doc.includes(q) || workshop.includes(q);
+            return name.includes(q) || doc.includes(q) || eventName.includes(q);
         })
         : rows;
 
@@ -791,7 +738,7 @@ export default function RegistrationsPage() {
         return pages;
     };
 
-    const COLS = 9;
+    const COLS = 8;
 
     return (
         <DashboardLayout title="Inscripciones">
@@ -853,8 +800,7 @@ export default function RegistrationsPage() {
                                 <th>#</th>
                                 <th>Beneficiario</th>
                                 <th>Documento</th>
-                                <th>Taller</th>
-                                <th>Sesión</th>
+                                <th>Evento</th>
                                 <th>Estado</th>
                                 <th>Registrado por</th>
                                 <th>Fecha</th>
@@ -874,7 +820,7 @@ export default function RegistrationsPage() {
                                 ))
                             ) : filtered.length === 0 ? (
                                 <tr className="reg-state-row">
-                                    <td colSpan={COLS}>
+                                    <td colSpan={COLS as number}>
                                         <div className="reg-state-icon"><IconUsers /></div>
                                         <p className="reg-state-title">
                                             {search ? 'Sin resultados' : 'Sin inscripciones'}
@@ -916,14 +862,8 @@ export default function RegistrationsPage() {
                                             </td>
                                             <td>
                                                 <span className="reg-workshop">
-                                                    {reg.session.work_shop.name}
+                                                    {reg.event.name}
                                                 </span>
-                                            </td>
-                                            <td>
-                                                <div className="reg-date">{formatDate(reg.session.start_date)}</div>
-                                                <div className="reg-date" style={{ fontSize: 11 }}>
-                                                    {formatDate(reg.session.end_date)}
-                                                </div>
                                             </td>
                                             <td>
                                                 <StatusCell
