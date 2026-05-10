@@ -5,6 +5,7 @@ import QrScannerPage from "../pages/QrScannerPage";
 import RegistrationsPage from "../pages/RegistrationsPage";
 import AccessControlPage from "../pages/AccessControlPage";
 import TalleresPage from "../pages/TalleresPage";
+import ConfiguracionPage from "../pages/ConfiguracionPage";
 import PrivateRoute from "./PrivateRoute";
 
 export default function AppRouter() {
@@ -49,6 +50,13 @@ export default function AppRouter() {
                     element={
                         <PrivateRoute>
                             <TalleresPage/>
+                        </PrivateRoute>
+                    }/>
+                <Route
+                    path="/configuracion"
+                    element={
+                        <PrivateRoute>
+                            <ConfiguracionPage/>
                         </PrivateRoute>
                     }/>
             </Routes>

@@ -22,7 +22,8 @@
       "PowerShell(Get-Content *)",
       "PowerShell(go mod *)",
       "Bash(Select-Object FullName)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }
