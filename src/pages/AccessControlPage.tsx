@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
-import { registrationService } from '../services/registrationService';
+import { attendanceService } from '../services/attendanceService';
 import { eventService } from '../services/eventService';
 import { workshopService } from '../services/workshopService';
-import { sessionService } from '../services/sessionService';
-import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
-import type { Registration } from '../types/registration.types';
+import { peopleService } from '../services/peopleService';
+import { useMqttAttendances } from '../hooks/useMqttAttendances';
+import { SearchableSelect } from '../components/SearchableSelect';
+import type { Attendance } from '../types/attendance.types';
 import type { Event } from '../types/event.types';
 import type { Workshop } from '../types/workshop.types';
-import type { Session } from '../types/session.types';
+import type { Person } from '../types/people.types';
 import './AccessControlPage.css';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -43,10 +44,10 @@ const IconUsers = ({ size = 22 }: { size?: number }) => (
     </svg>
 );
 
-const IconCheckCircle = ({ size = 22 }: { size?: number }) => (
+const IconGrid = ({ size = 22 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-        <polyline points="22 4 12 14.01 9 11.01" />
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
     </svg>
 );
 
@@ -62,12 +63,6 @@ const IconAlert = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-);
-
-const IconChevron = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="6 9 12 15 18 9" />
     </svg>
 );
 
@@ -98,33 +93,25 @@ function formatDate(iso: string | null) {
     });
 }
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
-interface SummaryStats {
-    total_registrations: number;
-    total_payments: number;
-    total_presences: number;
-}
-
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function AccessControlPage() {
-    // Filters
+    // Filter data
     const [events, setEvents] = useState<Event[]>([]);
     const [workshops, setWorkshops] = useState<Workshop[]>([]);
-    const [sessions, setSessions] = useState<Session[]>([]);
+    const [people, setPeople] = useState<Person[]>([]);
 
     const [eventId, setEventId] = useState('');
     const [workshopId, setWorkshopId] = useState('');
-    const [sessionId, setSessionId] = useState('');
+    const [beneficiaryId, setBeneficiaryId] = useState('');
 
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [loadingWorkshops, setLoadingWorkshops] = useState(false);
-    const [loadingSessions, setLoadingSessions] = useState(false);
+    const [loadingPeople, setLoadingPeople] = useState(true);
 
     // Results
-    const [rows, setRows] = useState<Registration[]>([]);
-    const [summary, setSummary] = useState<SummaryStats | null>(null);
+    const [rows, setRows] = useState<Attendance[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [queried, setQueried] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -137,12 +124,18 @@ export default function AccessControlPage() {
             .finally(() => setLoadingEvents(false));
     }, []);
 
+    // Load people on mount
+    useEffect(() => {
+        peopleService.getPeople({ size_page: 300 })
+            .then((res) => setPeople(res.data ?? []))
+            .catch(() => setPeople([]))
+            .finally(() => setLoadingPeople(false));
+    }, []);
+
     // Load workshops when event changes
     useEffect(() => {
         setWorkshops([]);
         setWorkshopId('');
-        setSessions([]);
-        setSessionId('');
         if (!eventId) return;
         setLoadingWorkshops(true);
         workshopService.getWorkshops({ event_id: eventId, size_page: 100 })
@@ -151,24 +144,12 @@ export default function AccessControlPage() {
             .finally(() => setLoadingWorkshops(false));
     }, [eventId]);
 
-    // Load sessions when workshop changes
-    useEffect(() => {
-        setSessions([]);
-        setSessionId('');
-        if (!workshopId) return;
-        setLoadingSessions(true);
-        sessionService.getSessions({ workshop_id: workshopId, size_page: 100 })
-            .then((res) => setSessions(res.data ?? []))
-            .catch(() => setSessions([]))
-            .finally(() => setLoadingSessions(false));
-    }, [workshopId]);
-
     const handleClear = () => {
         setEventId('');
         setWorkshopId('');
-        setSessionId('');
+        setBeneficiaryId('');
         setRows([]);
-        setSummary(null);
+        setTotalCount(0);
         setQueried(false);
         setError(null);
     };
@@ -177,55 +158,53 @@ export default function AccessControlPage() {
         setLoading(true);
         setError(null);
         try {
-            const registrationsPromise = registrationService.getRegistrations({ size_page: 500 });
-
-            let summaryPromise: Promise<{ data: Array<{ total_registrations: number | null; total_payments: number | null; total_presences: number | null }> }>;
-            if (sessionId) {
-                summaryPromise = sessionService.getSessionSummary(sessionId);
-            } else if (workshopId) {
-                summaryPromise = workshopService.getWorkshopSummary(workshopId);
-            } else {
-                summaryPromise = eventService.getEventSummary(eventId || undefined);
-            }
-
-            const [regRes, sumRes] = await Promise.all([registrationsPromise, summaryPromise]);
-
-            let data = regRes.data ?? [];
-            if (workshopId) {
-                data = data.filter((r) => r.session.work_shop.id === workshopId);
-            }
-            if (sessionId) {
-                data = data.filter((r) => r.session.id === sessionId);
-            }
-            setRows(data);
-
-            const agg = (sumRes.data ?? []).reduce<SummaryStats>(
-                (acc, item) => ({
-                    total_registrations: acc.total_registrations + (item.total_registrations ?? 0),
-                    total_payments: acc.total_payments + (item.total_payments ?? 0),
-                    total_presences: acc.total_presences + (item.total_presences ?? 0),
-                }),
-                { total_registrations: 0, total_payments: 0, total_presences: 0 },
-            );
-            setSummary(agg);
-
+            const res = await attendanceService.getAttendances({
+                size_page: 500,
+                event_id: eventId || undefined,
+                workshop_id: workshopId || undefined,
+                beneficiary_id: beneficiaryId || undefined,
+            });
+            setRows(res.data ?? []);
+            setTotalCount(res.pagination?.total ?? (res.data?.length ?? 0));
             setQueried(true);
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Error al cargar los registros.');
+            setError(e instanceof Error ? e.message : 'Error al cargar las asistencias.');
         } finally {
             setLoading(false);
         }
-    }, [eventId, workshopId, sessionId]);
+    }, [eventId, workshopId, beneficiaryId]);
 
-    const { connected: mqttConnected } = useMqttRegistrations(() => {
+    const { connected: mqttConnected } = useMqttAttendances(() => {
         if (queried) fetchData();
     });
 
-    const handleConsult = () => { fetchData(); };
+    // Select options
+    const eventOptions = [
+        { value: '', label: 'Todos los eventos' },
+        ...events.map((ev) => ({ value: ev.id, label: ev.name })),
+    ];
 
-    const handleRefresh = () => {
-        if (queried) fetchData();
-    };
+    const workshopOptions = [
+        { value: '', label: 'Todos los talleres' },
+        ...workshops.map((w) => ({
+            value: w.id,
+            label: w.name,
+            sublabel: w.shortname ?? undefined,
+        })),
+    ];
+
+    const beneficiaryOptions = [
+        { value: '', label: 'Todos los beneficiarios' },
+        ...people.map((p) => ({
+            value: p.id,
+            label: fullName(p.names, p.surname, p.last_name),
+            sublabel: `${p.document_type.abbreviated_description} ${p.document}`,
+        })),
+    ];
+
+    // Derived stats
+    const uniqueWorkshops = new Set(rows.map((a) => a.workshop.id)).size;
+    const uniqueBeneficiaries = new Set(rows.map((a) => a.beneficiary.id)).size;
 
     return (
         <DashboardLayout title="Control de Acceso">
@@ -233,14 +212,14 @@ export default function AccessControlPage() {
             <div className="ac-header">
                 <div className="ac-header-left">
                     <h2>Control de Acceso</h2>
-                    <p>Consulta inscritos, pagados y asistentes por evento, taller o sesión</p>
+                    <p>Consulta asistencias por evento, taller o beneficiario</p>
                 </div>
                 <div className="ac-header-right">
                     <span className="ac-mqtt-status" title={mqttConnected ? 'Tiempo real activo' : 'Sin conexión en tiempo real'}>
                         <span className={`ac-mqtt-dot ${mqttConnected ? 'ac-mqtt-dot--on' : ''}`} />
                         {mqttConnected ? 'En vivo' : 'Sin conexión'}
                     </span>
-                    <button className="ac-refresh-btn" onClick={handleRefresh} disabled={loading || !queried}>
+                    <button className="ac-refresh-btn" onClick={() => { if (queried) fetchData(); }} disabled={loading || !queried}>
                         <IconRefresh spinning={loading} />
                         Actualizar
                     </button>
@@ -256,64 +235,42 @@ export default function AccessControlPage() {
                 <div className="ac-filter-grid">
                     <div className="ac-filter-field">
                         <label className="ac-filter-label">Evento</label>
-                        <div className="ac-select-wrap">
-                            <select
-                                className="ac-select"
-                                value={eventId}
-                                onChange={(e) => setEventId(e.target.value)}
-                                disabled={loadingEvents}
-                            >
-                                <option value="">
-                                    {loadingEvents ? 'Cargando eventos...' : 'Todos los eventos...'}
-                                </option>
-                                {events.map((ev) => (
-                                    <option key={ev.id} value={ev.id}>{ev.name}</option>
-                                ))}
-                            </select>
-                            <span className="ac-select-arrow"><IconChevron /></span>
-                        </div>
+                        <SearchableSelect
+                            options={eventOptions}
+                            value={eventId}
+                            onChange={setEventId}
+                            placeholder="Seleccionar evento..."
+                            searchPlaceholder="Buscar evento..."
+                            loading={loadingEvents}
+                            emptyText="Sin eventos disponibles"
+                        />
                     </div>
 
                     <div className="ac-filter-field">
                         <label className="ac-filter-label">Taller</label>
-                        <div className="ac-select-wrap">
-                            <select
-                                className="ac-select"
-                                value={workshopId}
-                                onChange={(e) => setWorkshopId(e.target.value)}
-                                disabled={loadingWorkshops || (!eventId && workshops.length === 0)}
-                            >
-                                <option value="">
-                                    {loadingWorkshops ? 'Cargando...' : 'Todos los talleres...'}
-                                </option>
-                                {workshops.map((w) => (
-                                    <option key={w.id} value={w.id}>{w.name}</option>
-                                ))}
-                            </select>
-                            <span className="ac-select-arrow"><IconChevron /></span>
-                        </div>
+                        <SearchableSelect
+                            options={workshopOptions}
+                            value={workshopId}
+                            onChange={setWorkshopId}
+                            placeholder="Seleccionar taller..."
+                            searchPlaceholder="Buscar taller..."
+                            loading={loadingWorkshops}
+                            disabled={!eventId && workshops.length === 0}
+                            emptyText={eventId ? 'Sin talleres para este evento' : 'Selecciona un evento primero'}
+                        />
                     </div>
 
                     <div className="ac-filter-field">
-                        <label className="ac-filter-label">Sesión</label>
-                        <div className="ac-select-wrap">
-                            <select
-                                className="ac-select"
-                                value={sessionId}
-                                onChange={(e) => setSessionId(e.target.value)}
-                                disabled={loadingSessions || (!workshopId && sessions.length === 0)}
-                            >
-                                <option value="">
-                                    {loadingSessions ? 'Cargando...' : 'Todas las sesiones...'}
-                                </option>
-                                {sessions.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {formatDate(s.start_date)}{s.end_date ? ` → ${formatDate(s.end_date)}` : ''}
-                                    </option>
-                                ))}
-                            </select>
-                            <span className="ac-select-arrow"><IconChevron /></span>
-                        </div>
+                        <label className="ac-filter-label">Beneficiario</label>
+                        <SearchableSelect
+                            options={beneficiaryOptions}
+                            value={beneficiaryId}
+                            onChange={setBeneficiaryId}
+                            placeholder="Seleccionar beneficiario..."
+                            searchPlaceholder="Buscar por nombre o documento..."
+                            loading={loadingPeople}
+                            emptyText="Sin beneficiarios disponibles"
+                        />
                     </div>
                 </div>
 
@@ -321,7 +278,7 @@ export default function AccessControlPage() {
                     <button className="ac-clear-btn" onClick={handleClear}>
                         × Limpiar
                     </button>
-                    <button className="ac-consult-btn" onClick={handleConsult} disabled={loading}>
+                    <button className="ac-consult-btn" onClick={fetchData} disabled={loading}>
                         <IconSearch />
                         Consultar
                     </button>
@@ -335,20 +292,20 @@ export default function AccessControlPage() {
                         <IconUsers size={24} />
                     </div>
                     <div className="ac-stat-body">
-                        <div className="ac-stat-count">{queried ? (summary?.total_registrations ?? 0) : '—'}</div>
-                        <p className="ac-stat-label">Inscritos</p>
-                        <p className="ac-stat-desc">Total de inscripciones registradas</p>
+                        <div className="ac-stat-count">{queried ? totalCount : '—'}</div>
+                        <p className="ac-stat-label">Total Asistencias</p>
+                        <p className="ac-stat-desc">Registros encontrados</p>
                     </div>
                 </div>
 
                 <div className="ac-stat-card ac-stat-card--green">
                     <div className="ac-stat-icon ac-stat-icon--green">
-                        <IconCheckCircle size={24} />
+                        <IconGrid size={24} />
                     </div>
                     <div className="ac-stat-body">
-                        <div className="ac-stat-count">{queried ? (summary?.total_payments ?? 0) : '—'}</div>
-                        <p className="ac-stat-label">Pagados</p>
-                        <p className="ac-stat-desc">Total con pago registrado</p>
+                        <div className="ac-stat-count">{queried ? uniqueWorkshops : '—'}</div>
+                        <p className="ac-stat-label">Talleres</p>
+                        <p className="ac-stat-desc">Talleres con asistencias</p>
                     </div>
                 </div>
 
@@ -357,9 +314,9 @@ export default function AccessControlPage() {
                         <IconUserCheck size={24} />
                     </div>
                     <div className="ac-stat-body">
-                        <div className="ac-stat-count">{queried ? (summary?.total_presences ?? 0) : '—'}</div>
-                        <p className="ac-stat-label">Asistentes</p>
-                        <p className="ac-stat-desc">Total con presencia confirmada</p>
+                        <div className="ac-stat-count">{queried ? uniqueBeneficiaries : '—'}</div>
+                        <p className="ac-stat-label">Beneficiarios</p>
+                        <p className="ac-stat-desc">Personas con asistencia</p>
                     </div>
                 </div>
             </div>
@@ -375,7 +332,7 @@ export default function AccessControlPage() {
             {/* Table */}
             <div className="ac-card">
                 <div className="ac-card-head">
-                    <p className="ac-card-title">Lista de Participantes</p>
+                    <p className="ac-card-title">Lista de Asistencias</p>
                     {queried && (
                         <span className="ac-card-count">{rows.length} registro{rows.length !== 1 ? 's' : ''}</span>
                     )}
@@ -389,9 +346,9 @@ export default function AccessControlPage() {
                                 <th>Beneficiario</th>
                                 <th>Documento</th>
                                 <th>Taller</th>
-                                <th>Sesión</th>
-                                <th>Inscrito el</th>
-                                <th>Estado</th>
+                                <th>Evento</th>
+                                <th>Fecha Asistencia</th>
+                                <th>Registrado por</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -410,7 +367,7 @@ export default function AccessControlPage() {
                                     <td colSpan={7}>
                                         <div className="ac-state-icon"><IconEmptyUsers /></div>
                                         <p className="ac-state-title">Aplica un filtro para consultar</p>
-                                        <p className="ac-state-desc">Selecciona un evento, taller o sesión y presiona "Consultar".</p>
+                                        <p className="ac-state-desc">Selecciona un evento, taller o beneficiario y presiona "Consultar".</p>
                                     </td>
                                 </tr>
                             ) : rows.length === 0 ? (
@@ -418,25 +375,23 @@ export default function AccessControlPage() {
                                     <td colSpan={7}>
                                         <div className="ac-state-icon"><IconEmptyUsers /></div>
                                         <p className="ac-state-title">Sin resultados</p>
-                                        <p className="ac-state-desc">No se encontraron inscripciones para los filtros seleccionados.</p>
+                                        <p className="ac-state-desc">No se encontraron asistencias para los filtros seleccionados.</p>
                                     </td>
                                 </tr>
                             ) : (
-                                rows.map((reg, idx) => {
-                                    const b = reg.beneficiary;
+                                rows.map((att, idx) => {
+                                    const b = att.beneficiary;
+                                    const w = att.workshop;
                                     const name = fullName(b.names, b.surname, b.last_name);
                                     return (
-                                        <tr key={reg.id}>
+                                        <tr key={att.id}>
                                             <td>
                                                 <span className="ac-num">{idx + 1}</span>
                                             </td>
                                             <td>
                                                 <div className="ac-beneficiary">
                                                     <div className="ac-avatar">{initials(b.names, b.surname)}</div>
-                                                    <div>
-                                                        <div className="ac-beneficiary-name">{name}</div>
-                                                        <div className="ac-beneficiary-user">@{b.user.username}</div>
-                                                    </div>
+                                                    <div className="ac-beneficiary-name">{name}</div>
                                                 </div>
                                             </td>
                                             <td>
@@ -445,22 +400,16 @@ export default function AccessControlPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className="ac-workshop-badge">
-                                                    {reg.session.work_shop.name}
-                                                </span>
+                                                <span className="ac-workshop-badge">{w.name}</span>
                                             </td>
                                             <td>
-                                                <div className="ac-date">{formatDate(reg.session.start_date)}</div>
-                                                <div className="ac-date" style={{ fontSize: 11 }}>{formatDate(reg.session.end_date)}</div>
+                                                <span className="ac-event-badge">{w.event.name}</span>
                                             </td>
                                             <td>
-                                                <span className="ac-date">{formatDate(reg.created_at)}</span>
+                                                <span className="ac-date">{formatDate(att.created_at)}</span>
                                             </td>
                                             <td>
-                                                <span className="ac-status-badge">
-                                                    <span className="ac-status-dot" />
-                                                    Inscrito
-                                                </span>
+                                                <span className="ac-created-by">@{att.created_by.username}</span>
                                             </td>
                                         </tr>
                                     );

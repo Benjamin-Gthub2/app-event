@@ -4,6 +4,9 @@ import type { Attendance, AttendancesResponse, CreateAttendanceBody } from '../t
 export interface GetAttendancesParams {
     page?: number;
     size_page?: number;
+    event_id?: string;
+    workshop_id?: string;
+    beneficiary_id?: string;
     start_date?: string;
     end_date?: string;
 }
@@ -18,6 +21,9 @@ export const attendanceService = {
         const query = new URLSearchParams();
         if (params.page !== undefined) query.set('page', String(params.page));
         if (params.size_page !== undefined) query.set('size_page', String(params.size_page));
+        if (params.event_id) query.set('event_id', params.event_id);
+        if (params.workshop_id) query.set('workshop_id', params.workshop_id);
+        if (params.beneficiary_id) query.set('beneficiary_id', params.beneficiary_id);
         if (params.start_date) query.set('start_date', params.start_date);
         if (params.end_date) query.set('end_date', params.end_date);
         const qs = query.toString();

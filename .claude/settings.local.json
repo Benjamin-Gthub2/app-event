@@ -21,7 +21,8 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event\" -File | ForEach-Object { $_.Name })",
       "PowerShell(Get-Content *)",
       "PowerShell(go mod *)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(Select-Object Name)"
     ]
   }
 }
