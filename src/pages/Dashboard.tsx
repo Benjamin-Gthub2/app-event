@@ -39,6 +39,19 @@ const IconReport = () => (
     </svg>
 );
 
+const IconWorkshop = () => (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <line x1="8" y1="14" x2="10" y2="14" />
+        <line x1="14" y1="14" x2="16" y2="14" />
+        <line x1="8" y1="17" x2="10" y2="17" />
+        <line x1="14" y1="17" x2="16" y2="17" />
+    </svg>
+);
+
 const IconArrow = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <line x1="5" y1="12" x2="19" y2="12" />
@@ -68,8 +81,19 @@ const MODULES = [
         path: '/asistentes',
         color: '#48bb78',
         colorLight: '#f0fff4',
-        stat: '0',
+        stat: '',
         statLabel: 'registrados',
+    },
+    {
+        id: 'talleres',
+        title: 'Talleres',
+        description: 'Consulta la disponibilidad de talleres y cupos en tiempo real.',
+        icon: <IconWorkshop />,
+        path: '/talleres',
+        color: '#4299e1',
+        colorLight: '#ebf8ff',
+        stat: '—',
+        statLabel: 'en tiempo real',
     },
     {
         id: 'accesos',
@@ -79,7 +103,7 @@ const MODULES = [
         path: '/accesos',
         color: '#ed8936',
         colorLight: '#fffaf0',
-        stat: '0',
+        stat: '',
         statLabel: 'accesos hoy',
     },
     {
@@ -90,7 +114,7 @@ const MODULES = [
         path: '/reportes',
         color: '#9f7aea',
         colorLight: '#faf5ff',
-        stat: '0',
+        stat: '',
         statLabel: 'reportes',
     },
 ];
