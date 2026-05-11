@@ -246,6 +246,104 @@
     color: var(--tal-text-primary);
 }
 
+/* ── Filter bar (hidden in fullscreen via React conditional render) ───────────── */
+.tal-filter-bar {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--tal-header-bg);
+    border-bottom: 1px solid var(--tal-header-border);
+    flex-shrink: 0;
+    transition: background 0.25s, border-color 0.25s;
+}
+
+/* grouped control: label on top, select below */
+.tal-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.tal-filter-group--disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.tal-filter-group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--tal-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    padding-left: 2px;
+}
+
+/* arrow between from/to */
+.tal-filter-arrow {
+    color: var(--tal-text-muted);
+    font-size: 16px;
+    padding-bottom: 6px;
+    flex-shrink: 0;
+}
+
+/* actions column: buttons aligned at bottom */
+.tal-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 1px;
+}
+
+.tal-filter-select {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--tal-header-border);
+    border-radius: 8px;
+    background: var(--tal-bg);
+    color: var(--tal-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.25s, color 0.25s;
+    min-width: 110px;
+}
+
+.tal-filter-select--day { min-width: 150px; }
+
+.tal-filter-select:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 2px rgba(6,182,212,0.15);
+}
+
+.tal-filter-btn {
+    height: 36px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+}
+
+.tal-filter-btn--apply {
+    background: #06b6d4;
+    color: #fff;
+}
+.tal-filter-btn--apply:hover { background: #0891b2; box-shadow: 0 2px 8px rgba(6,182,212,0.35); }
+
+.tal-filter-btn--clear {
+    background: transparent;
+    color: var(--tal-text-secondary);
+    border: 1px solid var(--tal-header-border);
+}
+.tal-filter-btn--clear:hover { background: var(--tal-icon-btn-hover); }
+
 /* ── Grid content ────────────────────────────────────────────────────────────── */
 .tal-content {
     flex: 1;
@@ -385,10 +483,42 @@
     transition: color 0.25s;
 }
 
+.tal-card-date {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tal-text-secondary);
+    text-transform: capitalize;
+    margin: 4px 0 0;
+}
+
 .tal-card-meta {
     font-size: 12px;
     color: var(--tal-text-muted);
     font-weight: 500;
+    margin: 2px 0 0;
+}
+
+.tal-card-place {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    padding: 5px 11px 5px 9px;
+    border-radius: 8px;
+    background: rgba(6, 182, 212, 0.10);
+    border: 1px solid rgba(6, 182, 212, 0.22);
+    color: #0891b2;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15px;
+    line-height: 1;
+    width: fit-content;
+}
+
+[data-theme="dark"] .tal-card-place {
+    background: rgba(6, 182, 212, 0.08);
+    color: #22d3ee;
+    border-color: rgba(6, 182, 212, 0.18);
 }
 
 /* ── Numbers ─────────────────────────────────────────────────────────────────── */

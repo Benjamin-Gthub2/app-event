@@ -39,6 +39,25 @@ const IconExitFullscreen = () => (
     </svg>
 );
 
+const IconPin = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+    </svg>
+);
+
+// ── Time options for filter selects (every 30 min, 00:00 → 23:59) ──────────────
+const HALF_HOURS: string[] = (() => {
+    const times: string[] = [];
+    for (let h = 0; h < 24; h++) {
+        for (const m of [0, 30]) {
+            if (h === 23 && m === 30) continue;
+            times.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+        }
+    }
+    times.push('23:59');
+    return times;
+})();
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function getAvailStatus(capacity: number, inscritos: number): 'available' | 'full' | 'almost' {
@@ -60,6 +79,45 @@ function formatClock(d: Date) {
 
 function formatDateFull(d: Date) {
     return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function cap(s: string) {
+    return s.charAt(0).toUpperCase() + s.slice(1).replace(/\.$/, '');
+}
+
+function formatDayShort(isoDate: string): string {
+    // avoid timezone shift: append T12:00 to interpret as local noon
+    const d = new Date(`${isoDate}T12:00:00`);
+    if (isNaN(d.getTime())) return isoDate;
+    const wd  = d.toLocaleDateString('es-PE', { weekday: 'short' });
+    const day = d.getDate();
+    const mo  = d.toLocaleDateString('es-PE', { month: 'short' });
+    return `${cap(wd)} ${day} ${cap(mo)}`;
+}
+
+function formatCardDate(iso: string | null): string | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    const wd  = d.toLocaleDateString('es-PE', { weekday: 'short' });
+    const day = d.getDate();
+    const mo  = d.toLocaleDateString('es-PE', { month: 'short' });
+    return `${cap(wd)} ${day} ${cap(mo)}`;
+}
+
+function fmtTime(iso: string | null): string | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function extractDays(workshops: WorkshopSums[]): string[] {
+    const set = new Set<string>();
+    for (const w of workshops) {
+        if (w.start_date) set.add(w.start_date.substring(0, 10));
+    }
+    return Array.from(set).sort();
 }
 
 // ── Derived stats ──────────────────────────────────────────────────────────────
@@ -84,10 +142,29 @@ export default function TalleresPage() {
     const [error, setError] = useState<string | null>(null);
     const pageRef = useRef<HTMLDivElement>(null);
 
+    // available days from unfiltered load
+    const [availableDays, setAvailableDays] = useState<string[]>([]);
+
+    // filter inputs (what the user is typing/selecting)
+    const [filterDay, setFilterDay] = useState('');
+    const [filterStartTime, setFilterStartTime] = useState('');
+    const [filterEndTime, setFilterEndTime] = useState('');
+
+    // active filters (applied on "Aplicar")
+    const [activeFilters, setActiveFilters] = useState<{ start_date?: string; end_date?: string }>({});
+
+    // load all days once on mount (unfiltered)
+    useEffect(() => {
+        workshopService.getWorkshopSummary().then(res => {
+            setAvailableDays(extractDays(res.data ?? []));
+        }).catch(() => {});
+    }, []);
+
     const fetchData = useCallback(async () => {
+        setLoading(true);
         try {
-            const res = await workshopService.getWorkshopSummary();
-            setWorkshops(res.data);
+            const res = await workshopService.getWorkshopSummary(activeFilters);
+            setWorkshops(res.data ?? []);
             setError(null);
         } catch (err) {
             console.error('Error al cargar resumen de talleres:', err);
@@ -95,15 +172,12 @@ export default function TalleresPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeFilters]);
 
     const { connected: mqttConnected } = useMqttWorkshops(fetchData);
     useMqttRegistrations(fetchData);
 
-    // Initial fetch
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     // Clock ticker
     useEffect(() => {
@@ -124,6 +198,34 @@ export default function TalleresPage() {
             document.exitFullscreen().catch(() => {});
         }
     };
+
+    const handleDayChange = (day: string) => {
+        setFilterDay(day);
+        if (day) {
+            // default to full day when selecting a day
+            setFilterStartTime('00:00');
+            setFilterEndTime('23:59');
+        } else {
+            setFilterStartTime('');
+            setFilterEndTime('');
+        }
+    };
+
+    const applyFilters = () => {
+        if (!filterDay) { setActiveFilters({}); return; }
+        const start = filterStartTime ? `${filterDay}T${filterStartTime}:00` : filterDay;
+        const end   = filterEndTime   ? `${filterDay}T${filterEndTime}:00`   : filterDay;
+        setActiveFilters({ start_date: start, end_date: end });
+    };
+
+    const clearFilters = () => {
+        setFilterDay('');
+        setFilterStartTime('');
+        setFilterEndTime('');
+        setActiveFilters({});
+    };
+
+    const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
     const stats = computeStats(workshops);
 
@@ -190,6 +292,67 @@ export default function TalleresPage() {
                 </div>
             </header>
 
+            {/* ── Filter bar (hidden in fullscreen) ── */}
+            {!isFullscreen && (
+                <div className="tal-filter-bar">
+                    {/* Día */}
+                    <div className="tal-filter-group">
+                        <span className="tal-filter-group-label">Día</span>
+                        <select
+                            className="tal-filter-select tal-filter-select--day"
+                            value={filterDay}
+                            onChange={e => handleDayChange(e.target.value)}
+                        >
+                            <option value="">Todos los días</option>
+                            {availableDays.map(d => (
+                                <option key={d} value={d}>{formatDayShort(d)}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Horario desde – hasta */}
+                    <div className={`tal-filter-group${!filterDay ? ' tal-filter-group--disabled' : ''}`}>
+                        <span className="tal-filter-group-label">Desde</span>
+                        <select
+                            className="tal-filter-select"
+                            value={filterStartTime}
+                            onChange={e => setFilterStartTime(e.target.value)}
+                            disabled={!filterDay}
+                        >
+                            <option value="">00:00</option>
+                            {HALF_HOURS.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                    </div>
+
+                    <span className="tal-filter-arrow">→</span>
+
+                    <div className={`tal-filter-group${!filterDay ? ' tal-filter-group--disabled' : ''}`}>
+                        <span className="tal-filter-group-label">Hasta</span>
+                        <select
+                            className="tal-filter-select"
+                            value={filterEndTime}
+                            onChange={e => setFilterEndTime(e.target.value)}
+                            disabled={!filterDay}
+                        >
+                            <option value="">23:59</option>
+                            {HALF_HOURS.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="tal-filter-actions">
+                        <button className="tal-filter-btn tal-filter-btn--apply" onClick={applyFilters}>
+                            Aplicar
+                        </button>
+                        {hasActiveFilters && (
+                            <button className="tal-filter-btn tal-filter-btn--clear" onClick={clearFilters}>
+                                × Limpiar
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* ── Grid ── */}
             <div className="tal-content">
                 {loading ? (
@@ -197,7 +360,7 @@ export default function TalleresPage() {
                 ) : error ? (
                     <div className="tal-state-msg tal-state-msg--error">{error}</div>
                 ) : workshops.length === 0 ? (
-                    <div className="tal-state-msg">No hay talleres registrados.</div>
+                    <div className="tal-state-msg">No hay talleres para el filtro seleccionado.</div>
                 ) : (
                     <div className="tal-grid">
                         {workshops.map((w, i) => {
@@ -206,11 +369,11 @@ export default function TalleresPage() {
                             const status    = getAvailStatus(capacity, inscritos);
                             const pct       = capacity > 0 ? Math.min(100, Math.round((inscritos / capacity) * 100)) : 0;
                             const available = Math.max(0, capacity - inscritos);
-                            const fmtTime = (iso: string | null) =>
-                                iso ? new Date(iso).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true }) : null;
-                            const start = fmtTime(w.start_date);
-                            const end   = fmtTime(w.end_date);
-                            const timeLabel = start && end ? `${start} – ${end}` : start ?? end ?? null;
+
+                            const cardDate  = formatCardDate(w.start_date);
+                            const tStart    = fmtTime(w.start_date);
+                            const tEnd      = fmtTime(w.end_date);
+                            const timeLabel = tStart && tEnd ? `${tStart} – ${tEnd}` : tStart ?? tEnd ?? null;
 
                             return (
                                 <div key={w.id ?? i} className="tal-card">
@@ -222,11 +385,17 @@ export default function TalleresPage() {
                                         </span>
                                     </div>
 
-                                    {/* Name */}
+                                    {/* Name + date/time/place */}
                                     <div>
                                         <p className="tal-card-name">{w.name ?? 'Taller'}</p>
+                                        {cardDate  && <p className="tal-card-date">{cardDate}</p>}
                                         {timeLabel && <p className="tal-card-meta">{timeLabel}</p>}
-                                        {w.place && <p className="tal-card-meta">{w.place}</p>}
+                                        {w.place && (
+                                            <div className="tal-card-place">
+                                                <IconPin />
+                                                {w.place}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Numbers */}
