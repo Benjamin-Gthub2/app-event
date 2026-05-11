@@ -342,13 +342,13 @@ const QrScannerPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {allStatuses.length > 0 && (
-                            <StatusChanger
-                                registration={r}
-                                allStatuses={allStatuses}
-                                onStatusUpdated={handleStatusUpdated}
-                            />
-                        )}
+                        {/*{allStatuses.length > 0 && (*/}
+                        {/*    <StatusChanger*/}
+                        {/*        registration={r}*/}
+                        {/*        allStatuses={allStatuses}*/}
+                        {/*        onStatusUpdated={handleStatusUpdated}*/}
+                        {/*    />*/}
+                        {/*)}*/}
 
                         {selectedWorkshopId && (
                             <AttendanceButton
