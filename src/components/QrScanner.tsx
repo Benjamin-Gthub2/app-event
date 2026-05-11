@@ -35,14 +35,14 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, scanKey }) => {
         };
 
         const startScanner = async () => {
-            const constraints = [
+            const constraints: MediaTrackConstraints[] = [
                 { facingMode: { exact: 'environment' } },
                 { facingMode: 'environment' },
                 { facingMode: 'user' },
             ];
             for (const c of constraints) {
                 try {
-                    await scanner.start(c as string, config, onSuccess, () => null);
+                    await scanner.start(c, config, onSuccess, () => null);
                     return true;
                 } catch {
                     // probar siguiente
