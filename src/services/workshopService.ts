@@ -15,6 +15,9 @@ export interface CreateWorkshopBody {
     code?: string;
     capacity: number;
     event_id: string;
+    start_date: string;
+    end_date: string;
+    place: string;
 }
 
 export interface UpdateWorkshopBody {
@@ -23,6 +26,9 @@ export interface UpdateWorkshopBody {
     shortname?: string;
     code?: string;
     capacity: number;
+    start_date: string;
+    end_date: string;
+    place: string;
 }
 
 export const workshopService = {

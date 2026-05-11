@@ -23,6 +23,9 @@ export interface Workshop {
     shortname: string | null;
     code: string | null;
     capacity: number;
+    start_date: string | null;
+    end_date: string | null;
+    place: string | null;
     created_at: string | null;
     workshop_type?: WorkshopTypeRef;
     event?: WorkshopEventRef;

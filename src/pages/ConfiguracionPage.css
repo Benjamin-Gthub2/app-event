@@ -307,3 +307,40 @@
 .cfg-num { color: var(--cfg-text-muted); font-weight: 700; font-size: 13px; }
 
 .cfg-actions { display: flex; align-items: center; gap: 4px; }
+
+/* ── Speaker tags ────────────────────────────────────────────────────────────── */
+.cfg-speaker-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px 3px 10px;
+    background: #e0f2fe; color: #0369a1;
+    border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+[data-theme="dark"] .cfg-speaker-tag { background: #0d2038; color: #58a6ff; }
+
+.cfg-speaker-tag-remove {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: transparent; border: none; cursor: pointer;
+    color: inherit; padding: 0; opacity: 0.7;
+    transition: opacity 0.15s;
+}
+.cfg-speaker-tag-remove:hover { opacity: 1; }
+
+/* ── Speaker search dropdown ─────────────────────────────────────────────────── */
+.cfg-speaker-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 200;
+    background: var(--cfg-card-bg); border: 1px solid var(--cfg-border);
+    border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    overflow: hidden; max-height: 220px; overflow-y: auto;
+}
+.cfg-speaker-dropdown-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 14px; cursor: pointer; font-size: 13px;
+    color: var(--cfg-text-primary);
+    transition: background 0.12s;
+}
+.cfg-speaker-dropdown-item:hover { background: var(--cfg-hover); }
+.cfg-speaker-dropdown-item--disabled { opacity: 0.45; cursor: not-allowed; }
+.cfg-speaker-dropdown-item--disabled:hover { background: transparent; }
+.cfg-speaker-dropdown-item--info { color: var(--cfg-text-muted); cursor: default; font-style: italic; }
+.cfg-speaker-dropdown-item--info:hover { background: transparent; }
