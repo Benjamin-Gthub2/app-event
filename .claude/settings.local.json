@@ -25,7 +25,8 @@
       "Bash(Select-Object Name)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "PowerShell(head *)",
-      "Bash(Find C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event *)"
+      "Bash(Find C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event *)",
+      "Bash(powershell -Command \"[Convert]::ToBase64String\\([IO.File]::ReadAllBytes\\('logoCumbre.png'\\)\\)\")"
     ]
   }
 }
