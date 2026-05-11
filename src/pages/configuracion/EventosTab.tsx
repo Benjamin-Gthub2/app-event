@@ -39,13 +39,12 @@ interface EForm {
     phone: string; enable: boolean;
 }
 const EMPTY: EForm = { name: '', description: '', code: '', document: '', address: '', industry: '', phone: '', enable: true };
-const PAGE_SIZE = 10;
-
 export default function EventosTab() {
     const [rows, setRows]         = useState<Event[]>([]);
     const [page, setPage]         = useState(1);
     const [totalPages, setTP]     = useState(1);
     const [total, setTotal]       = useState(0);
+    const [pageSize, setPageSize] = useState(50);
     const [searchInput, setSI]    = useState('');
     const [activeQ, setAQ]        = useState('');
     const [loading, setLoading]   = useState(false);
@@ -64,13 +63,13 @@ export default function EventosTab() {
     const fetchEvents = useCallback(async () => {
         setLoading(true); setError(null);
         try {
-            const res = await eventService.getEvents({ page, size_page: PAGE_SIZE, name_or_document: activeQ || undefined });
+            const res = await eventService.getEvents({ page, size_page: pageSize, name_or_document: activeQ || undefined });
             setRows(res.data ?? []);
             setTotal(res.pagination.total);
             setTP(res.pagination.total_pages || 1);
         } catch (e) { setError(e instanceof Error ? e.message : 'Error al cargar.'); }
         finally { setLoading(false); }
-    }, [page, activeQ]);
+    }, [page, activeQ, pageSize]);
 
     useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
@@ -139,7 +138,7 @@ export default function EventosTab() {
                                 <tr className="cfg-state-row"><td colSpan={6}>No hay eventos registrados.</td></tr>
                             ) : rows.map((ev, idx) => (
                                 <tr key={ev.id}>
-                                    <td><span className="cfg-num">{(page - 1) * PAGE_SIZE + idx + 1}</span></td>
+                                    <td><span className="cfg-num">{(page - 1) * pageSize + idx + 1}</span></td>
                                     <td><div className="cfg-cell-name">{ev.name}</div></td>
                                     <td>{ev.code ? <span className="cfg-badge-code">{ev.code}</span> : <span className="cfg-cell-sub">—</span>}</td>
                                     <td>
@@ -160,22 +159,28 @@ export default function EventosTab() {
                         </tbody>
                     </table>
                 </div>
-                {totalPages > 1 && (
-                    <div className="cfg-pagination">
-                        <span className="cfg-pagination-info">Página {page} de {totalPages} · {total} total</span>
-                        <div className="cfg-pagination-btns">
-                            <button className="cfg-page-btn" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>‹</button>
-                            <span className="cfg-page-btn cfg-page-btn--active">{page}</span>
-                            <button className="cfg-page-btn" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>›</button>
-                        </div>
+                <div className="cfg-pagination">
+                    <div className="cfg-pagination-size">
+                        <span>Filas:</span>
+                        <select className="cfg-page-size-select" value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={1000}>1000</option>
+                        </select>
                     </div>
-                )}
+                    <span className="cfg-pagination-info">Página {page} de {totalPages} · {total} total</span>
+                    <div className="cfg-pagination-btns">
+                        <button className="cfg-page-btn" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>‹</button>
+                        <span className="cfg-page-btn cfg-page-btn--active">{page}</span>
+                        <button className="cfg-page-btn" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>›</button>
+                    </div>
+                </div>
             </div>
 
             {/* Create / Edit modal */}
             {modal && (
-                <div className="cfg-overlay" onClick={closeModal}>
-                    <div className="cfg-modal" onClick={e => e.stopPropagation()}>
+                <div className="cfg-overlay">
+                    <div className="cfg-modal">
                         <div className="cfg-modal-head">
                             <h3>{modal === 'create' ? 'Agregar Evento' : 'Editar Evento'}</h3>
                             <button className="cfg-modal-close" onClick={closeModal}><IconClose /></button>
@@ -190,15 +195,15 @@ export default function EventosTab() {
                                 )}
                                 <div className="cfg-form-grid">
                                     <div className="cfg-form-group cfg-form-group--full">
-                                        <label>Nombre *</label>
+                                        <label>Nombre <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.name} onChange={e => sf('name', e.target.value)} required placeholder="Nombre del evento" />
                                     </div>
                                     <div className="cfg-form-group cfg-form-group--full">
-                                        <label>Descripción *</label>
+                                        <label>Descripción <span className="cfg-req">*</span></label>
                                         <textarea className="cfg-form-textarea" value={form.description} onChange={e => sf('description', e.target.value)} required placeholder="Descripción del evento" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Código *</label>
+                                        <label>Código <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.code} onChange={e => sf('code', e.target.value)} required placeholder="Ej: EVT-2026" />
                                     </div>
                                     <div className="cfg-form-group">
@@ -206,15 +211,15 @@ export default function EventosTab() {
                                         <input className="cfg-form-input" type="tel" value={form.phone} onChange={e => sf('phone', e.target.value)} placeholder="+51 999 999 999" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Documento *</label>
+                                        <label>Documento <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.document} onChange={e => sf('document', e.target.value)} required placeholder="RUC o documento" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Industria *</label>
+                                        <label>Industria <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.industry} onChange={e => sf('industry', e.target.value)} required placeholder="Ej: Educación" />
                                     </div>
                                     <div className="cfg-form-group cfg-form-group--full">
-                                        <label>Dirección *</label>
+                                        <label>Dirección <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.address} onChange={e => sf('address', e.target.value)} required placeholder="Dirección del evento" />
                                     </div>
                                     <div className="cfg-form-group cfg-form-group--full">
@@ -236,8 +241,8 @@ export default function EventosTab() {
 
             {/* Delete confirm */}
             {deleteId && (
-                <div className="cfg-overlay" onClick={() => setDeleteId(null)}>
-                    <div className="cfg-modal cfg-modal--sm" onClick={e => e.stopPropagation()}>
+                <div className="cfg-overlay">
+                    <div className="cfg-modal cfg-modal--sm">
                         <div className="cfg-modal-head">
                             <h3>Eliminar Evento</h3>
                             <button className="cfg-modal-close" onClick={() => setDeleteId(null)}><IconClose /></button>

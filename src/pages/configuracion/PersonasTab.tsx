@@ -56,13 +56,12 @@ const EMPTY: PForm = {
     type_document_id: '', document: '', names: '', surname: '',
     last_name: '', phone: '', email: '', gender: '', enable: true,
 };
-const PAGE_SIZE = 10;
-
 export default function PersonasTab() {
     const [rows, setRows]       = useState<Person[]>([]);
     const [page, setPage]       = useState(1);
     const [totalPages, setTP]   = useState(1);
     const [total, setTotal]     = useState(0);
+    const [pageSize, setPageSize] = useState(50);
     const [searchInput, setSI]  = useState('');
     const [activeQ, setAQ]      = useState('');
     const [loading, setLoading] = useState(false);
@@ -81,13 +80,13 @@ export default function PersonasTab() {
     const fetch = useCallback(async () => {
         setLoading(true); setError(null);
         try {
-            const res = await peopleService.getPeople({ page, size_page: PAGE_SIZE, search_name: activeQ || undefined });
+            const res = await peopleService.getPeople({ page, size_page: pageSize, search_name: activeQ || undefined });
             setRows(res.data ?? []);
             setTotal(res.pagination.total);
             setTP(res.pagination.total_pages || 1);
         } catch (e) { setError(e instanceof Error ? e.message : 'Error al cargar.'); }
         finally { setLoading(false); }
-    }, [page, activeQ]);
+    }, [page, activeQ, pageSize]);
 
     useEffect(() => { fetch(); }, [fetch]);
 
@@ -151,7 +150,7 @@ export default function PersonasTab() {
                                 <tr className="cfg-state-row"><td colSpan={6}>No hay personas registradas.</td></tr>
                             ) : rows.map((p, idx) => (
                                 <tr key={p.id}>
-                                    <td><span className="cfg-num">{(page - 1) * PAGE_SIZE + idx + 1}</span></td>
+                                    <td><span className="cfg-num">{(page - 1) * pageSize + idx + 1}</span></td>
                                     <td>
                                         <div className="cfg-cell-main">
                                             <div className="cfg-avatar">{initials(p.names, p.surname)}</div>
@@ -181,22 +180,28 @@ export default function PersonasTab() {
                         </tbody>
                     </table>
                 </div>
-                {totalPages > 1 && (
-                    <div className="cfg-pagination">
-                        <span className="cfg-pagination-info">Página {page} de {totalPages} · {total} total</span>
-                        <div className="cfg-pagination-btns">
-                            <button className="cfg-page-btn" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>‹</button>
-                            <span className="cfg-page-btn cfg-page-btn--active">{page}</span>
-                            <button className="cfg-page-btn" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>›</button>
-                        </div>
+                <div className="cfg-pagination">
+                    <div className="cfg-pagination-size">
+                        <span>Filas:</span>
+                        <select className="cfg-page-size-select" value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={1000}>1000</option>
+                        </select>
                     </div>
-                )}
+                    <span className="cfg-pagination-info">Página {page} de {totalPages} · {total} total</span>
+                    <div className="cfg-pagination-btns">
+                        <button className="cfg-page-btn" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>‹</button>
+                        <span className="cfg-page-btn cfg-page-btn--active">{page}</span>
+                        <button className="cfg-page-btn" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>›</button>
+                    </div>
+                </div>
             </div>
 
             {/* Create / Edit modal */}
             {modal && (
-                <div className="cfg-overlay" onClick={closeModal}>
-                    <div className="cfg-modal" onClick={e => e.stopPropagation()}>
+                <div className="cfg-overlay">
+                    <div className="cfg-modal">
                         <div className="cfg-modal-head">
                             <h3>{modal === 'create' ? 'Agregar Persona' : 'Editar Persona'}</h3>
                             <button className="cfg-modal-close" onClick={closeModal}><IconClose /></button>
@@ -206,22 +211,22 @@ export default function PersonasTab() {
                                 {saveErr && <div className="cfg-save-error">{saveErr}</div>}
                                 <div className="cfg-form-grid">
                                     <div className="cfg-form-group">
-                                        <label>Tipo Documento *</label>
+                                        <label>Tipo Documento <span className="cfg-req">*</span></label>
                                         <select className="cfg-form-select" value={form.type_document_id} onChange={e => sf('type_document_id', e.target.value)} required>
                                             <option value="">Seleccionar...</option>
                                             {DOCUMENT_TYPES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
                                         </select>
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>N° Documento *</label>
+                                        <label>N° Documento <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.document} onChange={e => sf('document', e.target.value)} required placeholder="Ej: 12345678" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Nombres *</label>
+                                        <label>Nombres <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.names} onChange={e => sf('names', e.target.value)} required placeholder="Nombres" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Ap. Paterno *</label>
+                                        <label>Ap. Paterno <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.surname} onChange={e => sf('surname', e.target.value)} required placeholder="Apellido paterno" />
                                     </div>
                                     <div className="cfg-form-group">
@@ -263,8 +268,8 @@ export default function PersonasTab() {
 
             {/* Delete confirm */}
             {deleteId && (
-                <div className="cfg-overlay" onClick={() => setDeleteId(null)}>
-                    <div className="cfg-modal cfg-modal--sm" onClick={e => e.stopPropagation()}>
+                <div className="cfg-overlay">
+                    <div className="cfg-modal cfg-modal--sm">
                         <div className="cfg-modal-head">
                             <h3>Eliminar Persona</h3>
                             <button className="cfg-modal-close" onClick={() => setDeleteId(null)}><IconClose /></button>

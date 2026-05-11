@@ -46,20 +46,11 @@ interface WForm {
     start_date: string; end_date: string; place: string;
 }
 const EMPTY: WForm = { name: '', shortname: '', code: '', capacity: '', type_id: '', event_id: '', start_date: '', end_date: '', place: '' };
-const PAGE_SIZE = 10;
 
-function toISO(local: string): string {
-    if (!local) return '';
-    return new Date(local).toISOString();
-}
+import { isoToInputLima, inputLimaToISO, fmtDateTimeLima } from '../../utils/dateTime';
 
-function toLocal(iso: string | null | undefined): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+function toISO(local: string): string { return inputLimaToISO(local); }
+function toLocal(iso: string | null | undefined): string { return isoToInputLima(iso); }
 
 function speakerLabel(sp: WorkshopSpeaker) {
     const degree = sp.degree_abbreviation ? `${sp.degree_abbreviation} ` : '';
@@ -77,6 +68,9 @@ export default function TalleresTab() {
     const [totalPages, setTP]     = useState(1);
     const [total, setTotal]       = useState(0);
     const [filterEvent, setFE]    = useState('');
+    const [pageSize, setPageSize] = useState(50);
+    const [searchInput, setSI]    = useState('');
+    const [activeSearch, setAS]   = useState('');
     const [loading, setLoading]   = useState(false);
     const [error, setError]       = useState<string | null>(null);
 
@@ -119,14 +113,31 @@ export default function TalleresTab() {
         }).catch(() => {}).finally(() => setLS(false));
     }, []);
 
+    const filterRows = (list: Workshop[], q: string): Workshop[] => {
+        if (!q) return list;
+        const lower = q.toLowerCase();
+        return list.filter(w =>
+            w.name.toLowerCase().includes(lower) ||
+            (w.shortname ?? '').toLowerCase().includes(lower) ||
+            (w.code ?? '').toLowerCase().includes(lower) ||
+            (w.place ?? '').toLowerCase().includes(lower) ||
+            (w.workshop_type?.description ?? '').toLowerCase().includes(lower) ||
+            (w.event?.name ?? '').toLowerCase().includes(lower)
+        );
+    };
+
     const fetchWorkshops = useCallback(async () => {
         setLoading(true); setError(null);
         try {
-            const res = await workshopService.getWorkshops({ page, size_page: PAGE_SIZE, event_id: filterEvent || undefined });
-            const workshops = res.data ?? [];
+            const isSearching = activeSearch.trim().length > 0;
+            const params = isSearching
+                ? { size_page: 5000, event_id: filterEvent || undefined }
+                : { page, size_page: pageSize, event_id: filterEvent || undefined };
+            const res = await workshopService.getWorkshops(params);
+            const workshops = isSearching ? filterRows(res.data ?? [], activeSearch) : (res.data ?? []);
             setRows(workshops);
-            setTotal(res.pagination.total);
-            setTP(res.pagination.total_pages || 1);
+            setTotal(isSearching ? workshops.length : res.pagination.total);
+            setTP(isSearching ? 1 : (res.pagination.total_pages || 1));
 
             // load speakers for each workshop in parallel
             if (workshops.length > 0) {
@@ -144,11 +155,13 @@ export default function TalleresTab() {
             }
         } catch (e) { setError(e instanceof Error ? e.message : 'Error al cargar.'); }
         finally { setLoading(false); }
-    }, [page, filterEvent]);
+    }, [page, filterEvent, activeSearch, pageSize]);
 
     useEffect(() => { fetchWorkshops(); }, [fetchWorkshops]);
 
     const onFilterEvent = (id: string) => { setFE(id); setPage(1); };
+    const doSearch      = () => { setPage(1); setAS(searchInput); };
+    const clearSearch   = () => { setSI(''); setPage(1); setAS(''); };
 
     const openCreate = () => {
         setForm(EMPTY);
@@ -291,11 +304,14 @@ export default function TalleresTab() {
         <div>
             <div className="cfg-toolbar">
                 <div className="cfg-toolbar-left">
-                    <select className="cfg-search-input" style={{ maxWidth: 240 }} value={filterEvent} onChange={e => onFilterEvent(e.target.value)}>
+                    <input className="cfg-search-input" placeholder="Buscar por nombre, código, lugar..." value={searchInput} onChange={e => setSI(e.target.value)} onKeyDown={e => e.key === 'Enter' && doSearch()} />
+                    <button className="cfg-btn-ghost" onClick={doSearch}>Buscar</button>
+                    {activeSearch && <button className="cfg-btn-ghost" onClick={clearSearch}>× Limpiar</button>}
+                    <select className="cfg-search-input" style={{ maxWidth: 200 }} value={filterEvent} onChange={e => onFilterEvent(e.target.value)}>
                         <option value="">Todos los eventos...</option>
                         {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                     </select>
-                    {filterEvent && <button className="cfg-btn-ghost" onClick={() => onFilterEvent('')}>× Limpiar</button>}
+                    {filterEvent && !activeSearch && <button className="cfg-btn-ghost" onClick={() => onFilterEvent('')}>× Limpiar evento</button>}
                 </div>
                 <button className="cfg-btn-success" onClick={openCreate} disabled={loadingSelects}><IconPlus /> Agregar Taller</button>
             </div>
@@ -309,17 +325,17 @@ export default function TalleresTab() {
                 </div>
                 <div className="cfg-table-wrap">
                     <table className="cfg-table">
-                        <thead><tr><th>#</th><th>Nombre</th><th>Código</th><th>Capacidad</th><th>Tipo</th><th>Evento</th><th>Fecha Inicio</th><th>Ponentes</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>#</th><th>Nombre</th><th>Código</th><th>Capacidad</th><th>Tipo</th><th>Evento</th><th>Lugar</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Ponentes</th><th>Acciones</th></tr></thead>
                         <tbody>
                             {loading ? Array.from({ length: 5 }).map((_, i) => (
-                                <tr key={i}>{[100, 150, 70, 60, 90, 110, 100, 80, 60].map((w, j) => <td key={j}><span className="cfg-skeleton" style={{ width: w }} /></td>)}</tr>
+                                <tr key={i}>{[100, 150, 70, 60, 90, 110, 120, 100, 100, 80, 60].map((w, j) => <td key={j}><span className="cfg-skeleton" style={{ width: w }} /></td>)}</tr>
                             )) : rows.length === 0 ? (
-                                <tr className="cfg-state-row"><td colSpan={9}>No hay talleres registrados.</td></tr>
+                                <tr className="cfg-state-row"><td colSpan={11}>No hay talleres registrados.</td></tr>
                             ) : rows.map((w, idx) => {
                                 const speakers = speakersMap[w.id] ?? [];
                                 return (
                                     <tr key={w.id}>
-                                        <td><span className="cfg-num">{(page - 1) * PAGE_SIZE + idx + 1}</span></td>
+                                        <td><span className="cfg-num">{(page - 1) * pageSize + idx + 1}</span></td>
                                         <td>
                                             <div className="cfg-cell-name">{w.name}</div>
                                             {w.shortname && <div className="cfg-cell-sub">{w.shortname}</div>}
@@ -328,7 +344,9 @@ export default function TalleresTab() {
                                         <td><span className="cfg-cell-name">{w.capacity}</span></td>
                                         <td><span className="cfg-cell-sub">{w.workshop_type?.description ?? '—'}</span></td>
                                         <td><span className="cfg-cell-sub">{w.event?.name ?? '—'}</span></td>
-                                        <td><span className="cfg-cell-sub">{w.start_date ? new Date(w.start_date).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span></td>
+                                        <td><span className="cfg-cell-sub">{w.place ?? '—'}</span></td>
+                                        <td><span className="cfg-cell-sub">{fmtDateTimeLima(w.start_date)}</span></td>
+                                        <td><span className="cfg-cell-sub">{fmtDateTimeLima(w.end_date)}</span></td>
                                         <td>
                                             {speakers.length === 0
                                                 ? <span className="cfg-cell-sub">—</span>
@@ -351,8 +369,16 @@ export default function TalleresTab() {
                         </tbody>
                     </table>
                 </div>
-                {totalPages > 1 && (
+                {!activeSearch && (
                     <div className="cfg-pagination">
+                        <div className="cfg-pagination-size">
+                            <span>Filas:</span>
+                            <select className="cfg-page-size-select" value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={1000}>1000</option>
+                            </select>
+                        </div>
                         <span className="cfg-pagination-info">Página {page} de {totalPages} · {total} total</span>
                         <div className="cfg-pagination-btns">
                             <button className="cfg-page-btn" onClick={() => setPage(p => p - 1)} disabled={page <= 1}>‹</button>
@@ -365,8 +391,8 @@ export default function TalleresTab() {
 
             {/* Create / Edit modal */}
             {modal && (
-                <div className="cfg-overlay" onClick={closeModal}>
-                    <div className="cfg-modal" style={{ maxWidth: 660 }} onClick={e => e.stopPropagation()}>
+                <div className="cfg-overlay">
+                    <div className="cfg-modal" style={{ maxWidth: 660 }}>
                         <div className="cfg-modal-head">
                             <h3>{modal === 'create' ? 'Agregar Taller' : 'Editar Taller'}</h3>
                             <button className="cfg-modal-close" onClick={closeModal}><IconClose /></button>
@@ -376,7 +402,7 @@ export default function TalleresTab() {
                                 {saveErr && <div className="cfg-save-error">{saveErr}</div>}
                                 <div className="cfg-form-grid">
                                     <div className="cfg-form-group cfg-form-group--full">
-                                        <label>Nombre *</label>
+                                        <label>Nombre <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.name} onChange={e => sf('name', e.target.value)} required placeholder="Nombre del taller" />
                                     </div>
                                     <div className="cfg-form-group">
@@ -388,31 +414,31 @@ export default function TalleresTab() {
                                         <input className="cfg-form-input" value={form.code} onChange={e => sf('code', e.target.value)} placeholder="Ej: T001" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Capacidad *</label>
+                                        <label>Capacidad <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" type="number" min="1" value={form.capacity} onChange={e => sf('capacity', e.target.value)} required placeholder="Ej: 50" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Tipo de Taller *</label>
+                                        <label>Tipo de Taller <span className="cfg-req">*</span></label>
                                         <select className="cfg-form-select" value={form.type_id} onChange={e => sf('type_id', e.target.value)} required>
                                             <option value="">Seleccionar...</option>
                                             {wTypes.map(t => <option key={t.id} value={t.id}>{t.description}</option>)}
                                         </select>
                                     </div>
                                     <div className="cfg-form-group cfg-form-group--full">
-                                        <label>Lugar *</label>
+                                        <label>Lugar <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" value={form.place} onChange={e => sf('place', e.target.value)} required placeholder="Ej: Sala A - Piso 2" />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Fecha de Inicio *</label>
+                                        <label>Fecha de Inicio <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" type="datetime-local" value={form.start_date} onChange={e => sf('start_date', e.target.value)} required />
                                     </div>
                                     <div className="cfg-form-group">
-                                        <label>Fecha de Fin *</label>
+                                        <label>Fecha de Fin <span className="cfg-req">*</span></label>
                                         <input className="cfg-form-input" type="datetime-local" value={form.end_date} onChange={e => sf('end_date', e.target.value)} required />
                                     </div>
                                     {modal === 'create' && (
                                         <div className="cfg-form-group cfg-form-group--full">
-                                            <label>Evento *</label>
+                                            <label>Evento <span className="cfg-req">*</span></label>
                                             <select className="cfg-form-select" value={form.event_id} onChange={e => sf('event_id', e.target.value)} required>
                                                 <option value="">Seleccionar...</option>
                                                 {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
@@ -511,8 +537,8 @@ export default function TalleresTab() {
 
             {/* Delete confirm */}
             {deleteId && (
-                <div className="cfg-overlay" onClick={() => setDeleteId(null)}>
-                    <div className="cfg-modal cfg-modal--sm" onClick={e => e.stopPropagation()}>
+                <div className="cfg-overlay">
+                    <div className="cfg-modal cfg-modal--sm">
                         <div className="cfg-modal-head">
                             <h3>Eliminar Taller</h3>
                             <button className="cfg-modal-close" onClick={() => setDeleteId(null)}><IconClose /></button>

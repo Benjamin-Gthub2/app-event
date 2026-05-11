@@ -90,6 +90,7 @@ function formatDate(iso: string | null) {
     return new Date(iso).toLocaleString('es-PE', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
+        timeZone: 'America/Lima',
     });
 }
 

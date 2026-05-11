@@ -6,6 +6,7 @@ import { useMqttWorkshops } from '../hooks/useMqttWorkshops';
 import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { useTheme } from '../context/ThemeContext';
+import { fmtTimeLima, fmtDateShortLima, fmtDayShortLima, fmtClockLima, fmtDateFullLima } from '../utils/dateTime';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -73,44 +74,11 @@ function getProgressClass(status: 'available' | 'full' | 'almost') {
     return 'tal-progress-fill--green';
 }
 
-function formatClock(d: Date) {
-    return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-}
-
-function formatDateFull(d: Date) {
-    return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-function cap(s: string) {
-    return s.charAt(0).toUpperCase() + s.slice(1).replace(/\.$/, '');
-}
-
-function formatDayShort(isoDate: string): string {
-    // avoid timezone shift: append T12:00 to interpret as local noon
-    const d = new Date(`${isoDate}T12:00:00`);
-    if (isNaN(d.getTime())) return isoDate;
-    const wd  = d.toLocaleDateString('es-PE', { weekday: 'short' });
-    const day = d.getDate();
-    const mo  = d.toLocaleDateString('es-PE', { month: 'short' });
-    return `${cap(wd)} ${day} ${cap(mo)}`;
-}
-
-function formatCardDate(iso: string | null): string | null {
-    if (!iso) return null;
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return null;
-    const wd  = d.toLocaleDateString('es-PE', { weekday: 'short' });
-    const day = d.getDate();
-    const mo  = d.toLocaleDateString('es-PE', { month: 'short' });
-    return `${cap(wd)} ${day} ${cap(mo)}`;
-}
-
-function fmtTime(iso: string | null): string | null {
-    if (!iso) return null;
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return null;
-    return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
-}
+const formatClock    = fmtClockLima;
+const formatDateFull = fmtDateFullLima;
+const formatDayShort = fmtDayShortLima;
+const formatCardDate = fmtDateShortLima;
+const fmtTime        = fmtTimeLima;
 
 function extractDays(workshops: WorkshopSums[]): string[] {
     const set = new Set<string>();
