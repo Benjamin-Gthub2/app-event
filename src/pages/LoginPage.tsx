@@ -9,7 +9,7 @@ export default function LoginPage() {
     return (
         <div>
             {view === 'login'
-                ? <Login onShowRegister={() => setView('register')} />
+                ? <Login />
                 : <Register onShowLogin={() => setView('login')} />
             }
         </div>
