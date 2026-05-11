@@ -39,19 +39,6 @@ const IconExitFullscreen = () => (
     </svg>
 );
 
-// ── Mock times (hora a confirmar) ──────────────────────────────────────────────
-
-const MOCK_TIMES = [
-    '08:00 – 10:00',
-    '09:00 – 11:00',
-    '10:00 – 12:00',
-    '11:00 – 13:00',
-    '14:00 – 16:00',
-    '15:00 – 17:00',
-    '16:00 – 18:00',
-    '08:30 – 10:30',
-];
-
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function getAvailStatus(capacity: number, inscritos: number): 'available' | 'full' | 'almost' {
@@ -219,7 +206,11 @@ export default function TalleresPage() {
                             const status    = getAvailStatus(capacity, inscritos);
                             const pct       = capacity > 0 ? Math.min(100, Math.round((inscritos / capacity) * 100)) : 0;
                             const available = Math.max(0, capacity - inscritos);
-                            const time      = MOCK_TIMES[i % MOCK_TIMES.length];
+                            const fmtTime = (iso: string | null) =>
+                                iso ? new Date(iso).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true }) : null;
+                            const start = fmtTime(w.start_date);
+                            const end   = fmtTime(w.end_date);
+                            const timeLabel = start && end ? `${start} – ${end}` : start ?? end ?? null;
 
                             return (
                                 <div key={w.id ?? i} className="tal-card">
@@ -234,7 +225,8 @@ export default function TalleresPage() {
                                     {/* Name */}
                                     <div>
                                         <p className="tal-card-name">{w.name ?? 'Taller'}</p>
-                                        <p className="tal-card-meta">{time}</p>
+                                        {timeLabel && <p className="tal-card-meta">{timeLabel}</p>}
+                                        {w.place && <p className="tal-card-meta">{w.place}</p>}
                                     </div>
 
                                     {/* Numbers */}

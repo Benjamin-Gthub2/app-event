@@ -62,8 +62,9 @@ function toLocal(iso: string | null | undefined): string {
 }
 
 function speakerLabel(sp: WorkshopSpeaker) {
+    const degree = sp.degree_abbreviation ? `${sp.degree_abbreviation} ` : '';
     const full = [sp.speaker.names, sp.speaker.surname, sp.speaker.last_name].filter(Boolean).join(' ');
-    return full || sp.speaker.document;
+    return `${degree}${full || sp.speaker.document}`;
 }
 
 function personLabel(p: Person) {
@@ -97,8 +98,9 @@ export default function TalleresTab() {
 
     // speakers state for modal
     const [modalSpeakers, setModalSpeakers]         = useState<WorkshopSpeaker[]>([]); // existing (edit mode)
-    const [pendingSpeakers, setPendingSpeakers]     = useState<Person[]>([]);          // pending (create mode)
+    const [pendingSpeakers, setPendingSpeakers]     = useState<{ person: Person; degree: string }[]>([]); // pending (create mode)
     const [speakerSearch, setSpeakerSearch]         = useState('');
+    const [speakerDegree, setSpeakerDegree]         = useState('');
     const [speakerSearchRes, setSpeakerSearchRes]   = useState<Person[]>([]);
     const [speakerSearching, setSpeakerSearching]   = useState(false);
     const [speakerErr, setSpeakerErr]               = useState<string | null>(null);
@@ -154,6 +156,7 @@ export default function TalleresTab() {
         setModalSpeakers([]);
         setPendingSpeakers([]);
         setSpeakerSearch('');
+        setSpeakerDegree('');
         setSpeakerSearchRes([]);
         setSpeakerErr(null);
         setModal('create');
@@ -175,9 +178,9 @@ export default function TalleresTab() {
         setSaveErr(null);
         setPendingSpeakers([]);
         setSpeakerSearch('');
+        setSpeakerDegree('');
         setSpeakerSearchRes([]);
         setSpeakerErr(null);
-        // load existing speakers
         const existing = speakersMap[w.id] ?? [];
         setModalSpeakers(existing);
         setModal('edit');
@@ -185,7 +188,6 @@ export default function TalleresTab() {
 
     const closeModal = () => { setModal(null); setEditRow(null); };
 
-    // speaker search (client-side filter from preloaded people)
     const handleSpeakerSearch = (q: string) => {
         setSpeakerSearch(q);
         if (!q.trim()) { setSpeakerSearchRes([]); return; }
@@ -200,31 +202,34 @@ export default function TalleresTab() {
     };
 
     const addSpeakerCreate = (p: Person) => {
-        const alreadyPending = pendingSpeakers.some(s => s.id === p.id);
+        const alreadyPending = pendingSpeakers.some(s => s.person.id === p.id);
         const alreadyModal   = modalSpeakers.some(s => s.speaker.id === p.id);
         if (alreadyPending || alreadyModal) return;
-        setPendingSpeakers(prev => [...prev, p]);
+        setPendingSpeakers(prev => [...prev, { person: p, degree: speakerDegree.trim() }]);
         setSpeakerSearch('');
+        setSpeakerDegree('');
         setSpeakerSearchRes([]);
     };
 
     const removePendingSpeaker = (id: string) => {
-        setPendingSpeakers(prev => prev.filter(p => p.id !== id));
+        setPendingSpeakers(prev => prev.filter(s => s.person.id !== id));
     };
 
     const addSpeakerEdit = async (p: Person) => {
         if (!editRow) return;
         const alreadyModal   = modalSpeakers.some(s => s.speaker.id === p.id);
-        const alreadyPending = pendingSpeakers.some(s => s.id === p.id);
+        const alreadyPending = pendingSpeakers.some(s => s.person.id === p.id);
         if (alreadyModal || alreadyPending) return;
         setSpeakerErr(null);
         try {
-            await workshopSpeakerService.createWorkshopSpeaker({ workshop_id: editRow.id, speaker_id: p.id });
+            const degree = speakerDegree.trim() || undefined;
+            await workshopSpeakerService.createWorkshopSpeaker({ workshop_id: editRow.id, speaker_id: p.id, degree_abbreviation: degree });
             const res = await workshopSpeakerService.getWorkshopSpeakers({ workshop_id: editRow.id, size_page: 100 });
             setModalSpeakers(res.data ?? []);
             setSpeakersMap(prev => ({ ...prev, [editRow.id]: res.data ?? [] }));
         } catch (e) { setSpeakerErr(e instanceof Error ? e.message : 'Error al agregar ponente.'); }
         setSpeakerSearch('');
+        setSpeakerDegree('');
         setSpeakerSearchRes([]);
     };
 
@@ -257,7 +262,11 @@ export default function TalleresTab() {
                 // post pending speakers
                 if (pendingSpeakers.length > 0) {
                     await Promise.allSettled(
-                        pendingSpeakers.map(p => workshopSpeakerService.createWorkshopSpeaker({ workshop_id: newId, speaker_id: p.id }))
+                        pendingSpeakers.map(s => workshopSpeakerService.createWorkshopSpeaker({
+                            workshop_id: newId,
+                            speaker_id: s.person.id,
+                            degree_abbreviation: s.degree || undefined,
+                        }))
                     );
                 }
             } else if (editRow) {
@@ -422,10 +431,10 @@ export default function TalleresTab() {
                                     {(modal === 'create' ? pendingSpeakers.length > 0 : modalSpeakers.length > 0) && (
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                                             {modal === 'create'
-                                                ? pendingSpeakers.map(p => (
-                                                    <span key={p.id} className="cfg-speaker-tag">
-                                                        {personLabel(p)}
-                                                        <button type="button" className="cfg-speaker-tag-remove" onClick={() => removePendingSpeaker(p.id)} title="Quitar"><IconX /></button>
+                                                ? pendingSpeakers.map(s => (
+                                                    <span key={s.person.id} className="cfg-speaker-tag">
+                                                        {s.degree ? `${s.degree} ` : ''}{personLabel(s.person)}
+                                                        <button type="button" className="cfg-speaker-tag-remove" onClick={() => removePendingSpeaker(s.person.id)} title="Quitar"><IconX /></button>
                                                     </span>
                                                 ))
                                                 : modalSpeakers.map(s => (
@@ -438,8 +447,17 @@ export default function TalleresTab() {
                                         </div>
                                     )}
 
-                                    {/* search input */}
-                                    <div style={{ position: 'relative' }}>
+                                    {/* degree + search inputs */}
+                                    <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                                        <input
+                                            className="cfg-form-input"
+                                            style={{ maxWidth: 110, flexShrink: 0 }}
+                                            placeholder="Grado (Ej: Dr.)"
+                                            value={speakerDegree}
+                                            onChange={e => setSpeakerDegree(e.target.value)}
+                                            autoComplete="off"
+                                        />
+                                        <div style={{ position: 'relative', flex: 1 }}>
                                         <input
                                             className="cfg-form-input"
                                             placeholder="Buscar ponente por nombre o documento..."
@@ -452,7 +470,7 @@ export default function TalleresTab() {
                                                 {speakerSearching
                                                     ? <div className="cfg-speaker-dropdown-item cfg-speaker-dropdown-item--info">Buscando...</div>
                                                     : speakerSearchRes.map(p => {
-                                                        const alreadyCreate = pendingSpeakers.some(s => s.id === p.id);
+                                                        const alreadyCreate = pendingSpeakers.some(s => s.person.id === p.id);
                                                         const alreadyEdit   = modalSpeakers.some(s => s.speaker.id === p.id);
                                                         const disabled = alreadyCreate || alreadyEdit;
                                                         return (
@@ -478,6 +496,7 @@ export default function TalleresTab() {
                                                 <div className="cfg-speaker-dropdown-item cfg-speaker-dropdown-item--info">Sin resultados</div>
                                             </div>
                                         )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

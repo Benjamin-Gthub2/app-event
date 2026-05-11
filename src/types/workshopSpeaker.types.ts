@@ -21,6 +21,7 @@ export interface WorkshopSpeakerCreatedBy {
 
 export interface WorkshopSpeaker {
     id: string;
+    degree_abbreviation: string | null;
     created_at: string | null;
     workshop: WorkshopSpeakerWorkshop;
     speaker: WorkshopSpeakerSpeaker;
@@ -41,4 +42,5 @@ export interface WorkshopSpeakerByIdResponse {
 export interface CreateWorkshopSpeakerBody {
     workshop_id: string;
     speaker_id: string;
+    degree_abbreviation?: string;
 }
