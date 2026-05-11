@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import QrScanner from '../components/QrScanner';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { SearchableSelect } from '../components/SearchableSelect';
@@ -42,6 +43,37 @@ type AttendanceState =
     | { status: 'saved' }
     | { status: 'error'; message: string };
 
+// ── AttendanceModal ────────────────────────────────────────────────────────────
+
+interface AttendanceModalProps {
+    type: 'success' | 'error';
+    message: string;
+    onClose: () => void;
+}
+
+const AttendanceModal: React.FC<AttendanceModalProps> = ({ type, message, onClose }) => {
+    useEffect(() => {
+        const t = setTimeout(onClose, 5000);
+        return () => clearTimeout(t);
+    }, [onClose]);
+
+    return createPortal(
+        <div className="qr-modal-overlay" onClick={onClose}>
+            <div className={`qr-modal-card qr-modal-card--${type}`} onClick={e => e.stopPropagation()}>
+                <div className={`qr-modal-icon qr-modal-icon--${type}`}>
+                    {type === 'success' ? '✓' : '✕'}
+                </div>
+                <h2 className="qr-modal-title">
+                    {type === 'success' ? 'Asistencia guardada' : 'Error al guardar'}
+                </h2>
+                <p className="qr-modal-message">{message}</p>
+                <p className="qr-modal-hint">Toca en cualquier lugar para cerrar</p>
+            </div>
+        </div>,
+        document.body,
+    );
+};
+
 // ── AttendanceButton sub-component ─────────────────────────────────────────────
 
 interface AttendanceButtonProps {
@@ -51,42 +83,48 @@ interface AttendanceButtonProps {
 
 const AttendanceButton: React.FC<AttendanceButtonProps> = ({ workshopId, beneficiaryId }) => {
     const [state, setState] = useState<AttendanceState>({ status: 'idle' });
+    const [modal, setModal] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+    const closeModal = useCallback(() => setModal(null), []);
 
     const handleSave = async () => {
         setState({ status: 'saving' });
         try {
             await attendanceService.createAttendance({ workshop_id: workshopId, beneficiary_id: beneficiaryId });
             setState({ status: 'saved' });
+            setModal({ type: 'success', message: 'La asistencia del participante fue registrada correctamente.' });
         } catch (e) {
             const msg = e instanceof Error ? e.message : 'Error al guardar asistencia';
             setState({ status: 'error', message: msg });
+            setModal({ type: 'error', message: msg });
         }
     };
 
-    if (state.status === 'saved') {
-        return (
-            <div className="qr-attendance-saved">
-                ✓ Asistencia guardada correctamente
-            </div>
-        );
-    }
-
     return (
-        <div className="qr-attendance-wrap">
-            {state.status === 'error' && (
-                <p className="qr-status-error">{state.message}</p>
-            )}
-            <button
-                className="qr-btn-attendance"
-                onClick={handleSave}
-                disabled={state.status === 'saving'}
-            >
-                {state.status === 'saving'
-                    ? <><span className="qr-spinner qr-spinner--sm" /> Guardando...</>
-                    : '✓ Guardar asistencia'
-                }
-            </button>
-        </div>
+        <>
+            {modal && <AttendanceModal type={modal.type} message={modal.message} onClose={closeModal} />}
+            <div className="qr-attendance-wrap">
+                {state.status === 'saved' ? (
+                    <div className="qr-attendance-saved">✓ Asistencia guardada correctamente</div>
+                ) : (
+                    <>
+                        {state.status === 'error' && (
+                            <p className="qr-status-error">{state.message}</p>
+                        )}
+                        <button
+                            className="qr-btn-attendance"
+                            onClick={handleSave}
+                            disabled={state.status === 'saving'}
+                        >
+                            {state.status === 'saving'
+                                ? <><span className="qr-spinner qr-spinner--sm" /> Guardando...</>
+                                : '✓ Guardar asistencia'
+                            }
+                        </button>
+                    </>
+                )}
+            </div>
+        </>
     );
 };
 
