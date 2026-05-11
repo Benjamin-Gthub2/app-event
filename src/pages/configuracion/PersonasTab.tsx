@@ -252,7 +252,7 @@ export default function PersonasTab() {
                                     <div className="cfg-form-group cfg-form-group--full">
                                         <div className="cfg-form-toggle">
                                             <input type="checkbox" id="p-enable" className="cfg-toggle-input" checked={form.enable} onChange={e => sf('enable', e.target.checked)} />
-                                            <label htmlFor="p-enable" className="cfg-toggle-label">Persona activa</label>
+                                            <label htmlFor="p-enable" className="cfg-toggle-label">Habilitar</label>
                                         </div>
                                     </div>
                                 </div>
