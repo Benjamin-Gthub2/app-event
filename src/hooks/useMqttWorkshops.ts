@@ -15,7 +15,7 @@ export function useMqttWorkshops(onUpdate: () => void) {
         const tenantId = localStorage.getItem('x_tenant_id');
         if (!tenantId) return;
 
-        const topic = `/event/workshops/updates/${tenantId}`;
+        const topic = `/event/attendances/updates/${tenantId}`;
 
         const client = mqtt.connect(MQTT_URL, {
             clientId: `app_event_${Math.random().toString(16).slice(2)}`,

@@ -132,9 +132,9 @@ const Login: React.FC<LoginProps> = ({ onShowRegister }) => {
                     </button>
                 </form>
 
-                <footer className="login-footer">
-                    <button type="button" className="link-button" onClick={onShowRegister}>Crear Usuario</button>
-                </footer>
+                {/*<footer className="login-footer">*/}
+                {/*    <button type="button" className="link-button" onClick={onShowRegister}>Crear Usuario</button>*/}
+                {/*</footer>*/}
 
                 <footer className="login-footer">
                     <a href="/recuperar">¿Olvidaste tu contraseña?</a>
