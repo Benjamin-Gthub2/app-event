@@ -40,11 +40,7 @@ const EyeOffIcon = () => (
     </svg>
 );
 
-interface LoginProps {
-    onShowRegister: () => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onShowRegister }) => {
+const Login: React.FC = () => {
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
