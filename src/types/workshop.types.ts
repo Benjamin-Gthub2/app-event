@@ -47,8 +47,6 @@ export interface WorkshopSums {
     id: string | null;
     name: string | null;
     capacity: number | null;
-    total_registrations: number | null;
-    total_payments: number | null;
     total_presences: number | null;
 }
 

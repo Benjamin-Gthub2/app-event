@@ -78,10 +78,10 @@ function formatDateFull(d: Date) {
 // ── Derived stats ──────────────────────────────────────────────────────────────
 
 function computeStats(workshops: WorkshopSums[]) {
-    const totalInscritos = workshops.reduce((s, w) => s + (w.total_registrations ?? 0), 0);
+    const totalInscritos = workshops.reduce((s, w) => s + (w.total_presences ?? 0), 0);
     const totalCapacity  = workshops.reduce((s, w) => s + (w.capacity ?? 0), 0);
-    const llenos    = workshops.filter((w) => (w.total_registrations ?? 0) >= (w.capacity ?? 1)).length;
-    const conCupos  = workshops.filter((w) => (w.total_registrations ?? 0) < (w.capacity ?? 1)).length;
+    const llenos    = workshops.filter((w) => (w.total_presences ?? 0) >= (w.capacity ?? 1)).length;
+    const conCupos  = workshops.filter((w) => (w.total_presences ?? 0) < (w.capacity ?? 1)).length;
     const pctOcupacion = totalCapacity > 0 ? Math.round((totalInscritos / totalCapacity) * 100) : 0;
     return { totalInscritos, conCupos, llenos, pctOcupacion, totalCapacity };
 }
@@ -215,7 +215,7 @@ export default function TalleresPage() {
                     <div className="tal-grid">
                         {workshops.map((w, i) => {
                             const capacity  = w.capacity ?? 0;
-                            const inscritos = w.total_registrations ?? 0;
+                            const inscritos = w.total_presences ?? 0;
                             const status    = getAvailStatus(capacity, inscritos);
                             const pct       = capacity > 0 ? Math.min(100, Math.round((inscritos / capacity) * 100)) : 0;
                             const available = Math.max(0, capacity - inscritos);
