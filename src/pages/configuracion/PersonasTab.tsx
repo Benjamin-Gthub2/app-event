@@ -82,8 +82,10 @@ export default function PersonasTab() {
         try {
             const res = await peopleService.getPeople({ page, size_page: pageSize, search_name: activeQ || undefined });
             setRows(res.data ?? []);
-            setTotal(res.pagination.total);
-            setTP(res.pagination.total_pages || 1);
+            const tot = res.pagination.total;
+            setTotal(tot);
+            const apiPages = res.pagination.total_pages;
+            setTP(apiPages > 1 ? apiPages : Math.max(Math.ceil(tot / pageSize), 1));
         } catch (e) { setError(e instanceof Error ? e.message : 'Error al cargar.'); }
         finally { setLoading(false); }
     }, [page, activeQ, pageSize]);
