@@ -363,7 +363,12 @@
     font-weight: 500;
 }
 
-.ac-table-wrap { overflow-x: auto; }
+.ac-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 580px);
+    min-height: 220px;
+}
 
 .ac-table {
     width: 100%;
@@ -374,6 +379,9 @@
 .ac-table thead tr { background: var(--ac-th-bg); }
 
 .ac-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     padding: 11px 16px;
     text-align: left;
     font-size: 11px;
@@ -383,6 +391,7 @@
     color: var(--ac-th-text);
     white-space: nowrap;
     border-bottom: 1px solid var(--ac-divider);
+    background: var(--ac-th-bg);
 }
 
 .ac-table td {
