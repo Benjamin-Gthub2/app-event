@@ -60,6 +60,8 @@ export interface CreatedBy {
 
 export interface Registration {
     id: string;
+    send_qr: boolean;
+    send_certificate: boolean;
     created_at: string | null;
     status: Status;
     event: RegistrationEvent;

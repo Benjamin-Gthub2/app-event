@@ -51,6 +51,10 @@ export const registrationService = {
         await apiClient.put<unknown>(`/event/registrations/${registrationId}/statuses/${statusCode}`, {});
     },
 
+    async sendQrWhatsApp(registrationId: string, phoneNumber: string): Promise<void> {
+        await apiClient.post<unknown>(`/event/registrations/${registrationId}/send_qr_whatsapp`, { phone_number: phoneNumber });
+    },
+
     async getQrBlobUrl(id: string): Promise<string> {
         const token = localStorage.getItem('auth_token');
         const tenantId = localStorage.getItem('x_tenant_id');

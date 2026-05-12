@@ -1026,6 +1026,75 @@
     box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
 }
 
+/* ── Send status badges ──────────────────────────────────────────────────────── */
+.reg-send-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: none;
+    cursor: default;
+}
+
+.reg-send-badge--sent {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+[data-theme="dark"] .reg-send-badge--sent {
+    background: #052e16;
+    color: #4ade80;
+}
+
+.reg-send-badge--no {
+    background: var(--reg-input-bg);
+    color: var(--reg-text-muted);
+}
+
+.reg-send-badge--pending {
+    background: #fff7ed;
+    color: #c2410c;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.reg-send-badge--pending:hover {
+    background: #22c55e;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .reg-send-badge--pending {
+    background: #431407;
+    color: #fb923c;
+}
+
+[data-theme="dark"] .reg-send-badge--pending:hover {
+    background: #15803d;
+    color: #ffffff;
+}
+
+/* ── WhatsApp modal extras ───────────────────────────────────────────────────── */
+.reg-form-submit--whatsapp {
+    background: #25d366;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.reg-form-submit--whatsapp:hover:not(:disabled) {
+    background: #128c7e;
+}
+
+.reg-phone-hint {
+    font-size: 11px;
+    color: var(--reg-text-muted);
+    margin-top: 2px;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .reg-header {
