@@ -80,7 +80,10 @@ const Login: React.FC = () => {
                 </button>
 
                 <header className="login-header">
-                    <h2 className="login-title">Iniciar Sesión</h2>
+                    <div className="login-logo-wrap">
+                        <img src="/logoCumbre.png" alt="Cumbre PPLN 2026" className="login-logo" />
+                    </div>
+                    <h2 className="login-title">Cumbre PPLN 2026</h2>
                     <p className="login-subtitle">Ingresa tus credenciales para acceder</p>
                 </header>
 
