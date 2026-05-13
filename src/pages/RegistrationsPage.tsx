@@ -975,7 +975,7 @@ export default function RegistrationsPage() {
                                             </td>
                                             <td>
                                                 {reg.send_qr ? (
-                                                    <span className="reg-send-badge reg-send-badge--sent">Enviado</span>
+                                                    <span className="reg-send-badge reg-send-badge--sent"> <IconWhatsApp />Enviado</span>
                                                 ) : (
                                                     <button
                                                         className="reg-send-badge reg-send-badge--pending"
