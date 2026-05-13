@@ -640,7 +640,7 @@ function QrModal({ registrationId, name, onClose }: QrModalProps) {
                     {!blobUrl && !error && (
                         <div className="reg-qr-loading">
                             <span className="reg-qr-spinner" />
-                            <p>Generando QR...</p>
+                            <p>Obteniendo QR...</p>
                         </div>
                     )}
                     {error && (
