@@ -183,6 +183,12 @@ export default function AccessControlPage() {
         }
     }, [eventId, workshopId, beneficiaryId]);
 
+    const goToPage = (p: number) => {
+        if (p < 1 || p > totalPages || p === page) return;
+        setPage(p);
+        fetchData(p, pageSize);
+    };
+
     const { connected: mqttConnected } = useMqttAttendances(() => {
         if (queried) fetchData(page, pageSize);
     });
@@ -454,13 +460,13 @@ export default function AccessControlPage() {
                         <div className="ac-pagination-btns">
                             <button
                                 className="ac-page-btn"
-                                onClick={() => { setPage(p => p - 1); fetchData(page - 1, pageSize); }}
+                                onClick={() => goToPage(page - 1)}
                                 disabled={page <= 1}
                             >‹</button>
                             <span className="ac-page-btn ac-page-btn--active">{page}</span>
                             <button
                                 className="ac-page-btn"
-                                onClick={() => { setPage(p => p + 1); fetchData(page + 1, pageSize); }}
+                                onClick={() => goToPage(page + 1)}
                                 disabled={page >= totalPages}
                             >›</button>
                         </div>

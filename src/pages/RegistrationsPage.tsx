@@ -790,7 +790,8 @@ export default function RegistrationsPage() {
 
     useEffect(() => {
         fetchData(page);
-    }, [fetchData, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fetchData]);
 
     const handleStatusUpdated = (registrationId: string, newStatus: Status) => {
         setRows(prev => prev.map(r =>
@@ -819,6 +820,7 @@ export default function RegistrationsPage() {
     const handlePage = (p: number) => {
         if (p < 1 || p > totalPages || p === page) return;
         setPage(p);
+        fetchData(p);
     };
 
     const pageNumbers = () => {
