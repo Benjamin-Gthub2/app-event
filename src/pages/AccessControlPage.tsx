@@ -216,11 +216,11 @@ export default function AccessControlPage() {
     const uniqueBeneficiaries = new Set(rows.map((a) => a.beneficiary.id)).size;
 
     return (
-        <DashboardLayout title="Control de Acceso">
+        <DashboardLayout title="Control de Asistencia">
             {/* Page header */}
             <div className="ac-header">
                 <div className="ac-header-left">
-                    <h2>Control de Acceso</h2>
+                    <h2>Control de Asistencia</h2>
                     <p>Consulta asistencias por evento, taller o beneficiario</p>
                 </div>
                 <div className="ac-header-right">

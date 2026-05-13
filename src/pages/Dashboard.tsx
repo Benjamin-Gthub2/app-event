@@ -97,7 +97,7 @@ const MODULES = [
     },
     {
         id: 'accesos',
-        title: 'Control de Acceso',
+        title: 'Control de Asistencia',
         description: 'Revisa los registros de entrada y salida del evento en tiempo real.',
         icon: <IconAccess />,
         path: '/accesos',

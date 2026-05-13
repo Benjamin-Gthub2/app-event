@@ -122,7 +122,7 @@ const NAV_ITEMS = [
     { id: 'dashboard', label: 'Dashboard', Icon: IconDashboard, path: '/dashboard' },
     { id: 'asistentes', label: 'Inscripciones', Icon: IconUsers, path: '/asistentes' },
     { id: 'qr-scanner', label: 'Escáner QR', Icon: IconQr, path: '/qr-scanner' },
-    { id: 'accesos', label: 'Control de Acceso', Icon: IconAccess, path: '/accesos' },
+    { id: 'accesos', label: 'Control de Asistencia', Icon: IconAccess, path: '/accesos' },
     { id: 'talleres', label: 'Talleres', Icon: IconTalleres, path: '/talleres' },
     { id: 'reportes', label: 'Reportes', Icon: IconReport, path: '/reportes' },
     { id: 'configuracion', label: 'Configuración', Icon: IconSettings, path: '/configuracion' },
