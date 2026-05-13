@@ -72,11 +72,11 @@ export function isoToInputLima(iso: string | null | undefined): string {
     return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
-/** "YYYY-MM-DDTHH:MM" Lima local input → UTC ISO string (for API calls) */
+/** "YYYY-MM-DDTHH:MM" Lima local input → Lima ISO string with offset (for API calls) */
 export function inputLimaToISO(local: string): string {
     if (!local) return '';
-    // Append Lima UTC offset (-05:00). Peru has no DST, always UTC-5.
-    return new Date(`${local}:00-05:00`).toISOString();
+    // Return with Lima offset so the API receives the exact time selected, not UTC.
+    return `${local}:00-05:00`;
 }
 
 /** current Date → clock string in Lima time */
