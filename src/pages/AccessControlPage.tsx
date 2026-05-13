@@ -228,7 +228,7 @@ export default function AccessControlPage() {
                         <span className={`ac-mqtt-dot ${mqttConnected ? 'ac-mqtt-dot--on' : ''}`} />
                         {mqttConnected ? 'En vivo' : 'Sin conexión'}
                     </span>
-                    <button className="ac-refresh-btn" onClick={() => { if (queried) fetchData(); }} disabled={loading || !queried}>
+                    <button className="ac-refresh-btn" onClick={() => { if (queried) fetchData(page, pageSize); }} disabled={loading || !queried}>
                         <IconRefresh spinning={loading} />
                         Actualizar
                     </button>
