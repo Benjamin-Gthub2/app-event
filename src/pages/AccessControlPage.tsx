@@ -113,6 +113,9 @@ export default function AccessControlPage() {
     // Results
     const [rows, setRows] = useState<Attendance[]>([]);
     const [totalCount, setTotalCount] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
+    const [totalPages, setTotalPages] = useState(1);
     const [queried, setQueried] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -151,22 +154,27 @@ export default function AccessControlPage() {
         setBeneficiaryId('');
         setRows([]);
         setTotalCount(0);
+        setPage(1);
+        setTotalPages(1);
         setQueried(false);
         setError(null);
     };
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (targetPage: number, targetPageSize: number) => {
         setLoading(true);
         setError(null);
         try {
             const res = await attendanceService.getAttendances({
-                size_page: 500,
+                page: targetPage,
+                size_page: targetPageSize,
                 event_id: eventId || undefined,
                 workshop_id: workshopId || undefined,
                 beneficiary_id: beneficiaryId || undefined,
             });
             setRows(res.data ?? []);
-            setTotalCount(res.pagination?.total ?? (res.data?.length ?? 0));
+            const total = res.pagination?.total ?? (res.data?.length ?? 0);
+            setTotalCount(total);
+            setTotalPages(res.pagination?.total_pages ?? Math.max(Math.ceil(total / targetPageSize), 1));
             setQueried(true);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error al cargar las asistencias.');
@@ -176,7 +184,7 @@ export default function AccessControlPage() {
     }, [eventId, workshopId, beneficiaryId]);
 
     const { connected: mqttConnected } = useMqttAttendances(() => {
-        if (queried) fetchData();
+        if (queried) fetchData(page, pageSize);
     });
 
     // Select options
@@ -279,7 +287,7 @@ export default function AccessControlPage() {
                     <button className="ac-clear-btn" onClick={handleClear}>
                         × Limpiar
                     </button>
-                    <button className="ac-consult-btn" onClick={fetchData} disabled={loading}>
+                    <button className="ac-consult-btn" onClick={() => { setPage(1); fetchData(1, pageSize); }} disabled={loading}>
                         <IconSearch />
                         Consultar
                     </button>
@@ -335,7 +343,7 @@ export default function AccessControlPage() {
                 <div className="ac-card-head">
                     <p className="ac-card-title">Lista de Asistencias</p>
                     {queried && (
-                        <span className="ac-card-count">{rows.length} registro{rows.length !== 1 ? 's' : ''}</span>
+                        <span className="ac-card-count">{totalCount} registro{totalCount !== 1 ? 's' : ''}</span>
                     )}
                 </div>
 
@@ -387,7 +395,7 @@ export default function AccessControlPage() {
                                     return (
                                         <tr key={att.id}>
                                             <td>
-                                                <span className="ac-num">{idx + 1}</span>
+                                                <span className="ac-num">{(page - 1) * pageSize + idx + 1}</span>
                                             </td>
                                             <td>
                                                 <div className="ac-beneficiary">
@@ -419,6 +427,45 @@ export default function AccessControlPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination */}
+                {queried && totalCount > 0 && (
+                    <div className="ac-pagination">
+                        <div className="ac-pagination-size">
+                            <span>Filas:</span>
+                            <select
+                                className="ac-page-size-select"
+                                value={pageSize}
+                                onChange={(e) => {
+                                    const n = Number(e.target.value);
+                                    setPageSize(n);
+                                    setPage(1);
+                                    fetchData(1, n);
+                                }}
+                            >
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={500}>500</option>
+                            </select>
+                        </div>
+                        <span className="ac-pagination-info">
+                            Página {page} de {totalPages} · {totalCount} total
+                        </span>
+                        <div className="ac-pagination-btns">
+                            <button
+                                className="ac-page-btn"
+                                onClick={() => { setPage(p => p - 1); fetchData(page - 1, pageSize); }}
+                                disabled={page <= 1}
+                            >‹</button>
+                            <span className="ac-page-btn ac-page-btn--active">{page}</span>
+                            <button
+                                className="ac-page-btn"
+                                onClick={() => { setPage(p => p + 1); fetchData(page + 1, pageSize); }}
+                                disabled={page >= totalPages}
+                            >›</button>
+                        </div>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );

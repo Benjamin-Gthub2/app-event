@@ -120,7 +120,6 @@ function formatDate(iso: string | null) {
     });
 }
 
-const PAGE_SIZE = 50;
 
 // ── Status cell ────────────────────────────────────────────────────────────────
 
@@ -757,6 +756,7 @@ export default function RegistrationsPage() {
     const [rows, setRows] = useState<Registration[]>([]);
     const [pagination, setPagination] = useState<Pagination | null>(null);
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
@@ -776,7 +776,7 @@ export default function RegistrationsPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await registrationService.getRegistrations({ page: targetPage, size_page: PAGE_SIZE });
+            const res = await registrationService.getRegistrations({ page: targetPage, size_page: pageSize });
             setRows(res.data ?? []);
             setPagination(res.pagination ?? null);
         } catch (e) {
@@ -784,7 +784,7 @@ export default function RegistrationsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [pageSize]);
 
     const { connected: mqttConnected } = useMqttRegistrations(() => fetchData(page));
 
@@ -929,7 +929,7 @@ export default function RegistrationsPage() {
                                 filtered.map((reg, idx) => {
                                     const b = reg.beneficiary;
                                     const cb = reg.created_by;
-                                    const rowNum = (page - 1) * PAGE_SIZE + idx + 1;
+                                    const rowNum = (page - 1) * pageSize + idx + 1;
                                     const name = fullName(b.names, b.surname, b.last_name);
 
                                     return (
@@ -1013,6 +1013,18 @@ export default function RegistrationsPage() {
                 {/* Pagination */}
                 {pagination && pagination.total > 0 && (
                     <div className="reg-pagination">
+                        <div className="reg-pagination-size">
+                            <span>Filas:</span>
+                            <select
+                                className="reg-page-size-select"
+                                value={pageSize}
+                                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                            >
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={1000}>1000</option>
+                            </select>
+                        </div>
                         <span className="reg-pagination-info">
                             Página {page} de {totalPages} &mdash; {pagination.total} registros
                         </span>
