@@ -453,7 +453,7 @@ function AddRegistrationModal({ onClose, onSuccess }: AddRegistrationModalProps)
             .catch(() => setEvents([]))
             .finally(() => setLoadingEvents(false));
 
-        peopleService.getPeople({ size_page: 100 })
+        peopleService.getPeople({ size_page: 1000 })
             .then((res) => setPeople(res.data ?? []))
             .catch(() => setPeople([]))
             .finally(() => setLoadingPeople(false));
