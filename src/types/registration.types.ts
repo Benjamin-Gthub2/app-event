@@ -30,6 +30,7 @@ export interface Beneficiary {
     names: string;
     surname: string;
     last_name: string | null;
+    phone: string | null;
 }
 
 export interface RegistrationEvent {

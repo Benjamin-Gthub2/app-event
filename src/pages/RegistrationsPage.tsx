@@ -679,12 +679,13 @@ function QrModal({ registrationId, name, onClose }: QrModalProps) {
 interface WhatsAppModalProps {
     registrationId: string;
     name: string;
+    initialPhone: string;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-function WhatsAppModal({ registrationId, name, onClose, onSuccess }: WhatsAppModalProps) {
-    const [phone, setPhone] = useState('');
+function WhatsAppModal({ registrationId, name, initialPhone, onClose, onSuccess }: WhatsAppModalProps) {
+    const [phone, setPhone] = useState(initialPhone);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -760,7 +761,7 @@ export default function RegistrationsPage() {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
-    const [whatsappModal, setWhatsappModal] = useState<{ id: string; name: string } | null>(null);
+    const [whatsappModal, setWhatsappModal] = useState<{ id: string; name: string; phone: string } | null>(null);
     const [addModal, setAddModal] = useState(false);
     const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
 
@@ -976,7 +977,7 @@ export default function RegistrationsPage() {
                                                 ) : (
                                                     <button
                                                         className="reg-send-badge reg-send-badge--pending"
-                                                        onClick={() => setWhatsappModal({ id: reg.id, name })}
+                                                        onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ?? '' })}
                                                         title="Enviar QR por WhatsApp"
                                                     >
                                                         <IconWhatsApp />
@@ -1050,6 +1051,7 @@ export default function RegistrationsPage() {
                 <WhatsAppModal
                     registrationId={whatsappModal.id}
                     name={whatsappModal.name}
+                    initialPhone={whatsappModal.phone}
                     onClose={() => setWhatsappModal(null)}
                     onSuccess={() => {
                         handleSendQrUpdated(whatsappModal.id);
