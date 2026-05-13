@@ -174,7 +174,7 @@ export default function AccessControlPage() {
             setRows(res.data ?? []);
             const total = res.pagination?.total ?? (res.data?.length ?? 0);
             setTotalCount(total);
-            setTotalPages(res.pagination?.total_pages ?? Math.max(Math.ceil(total / targetPageSize), 1));
+            setTotalPages(Math.max(res.pagination?.last_page ?? 1, 1));
             setQueried(true);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error al cargar las asistencias.');

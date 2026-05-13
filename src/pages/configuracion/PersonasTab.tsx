@@ -84,8 +84,7 @@ export default function PersonasTab() {
             setRows(res.data ?? []);
             const tot = res.pagination.total;
             setTotal(tot);
-            const apiPages = res.pagination.total_pages;
-            setTP(apiPages > 1 ? apiPages : Math.max(Math.ceil(tot / pageSize), 1));
+            setTP(Math.max(res.pagination.last_page, Math.ceil(tot / pageSize), 1));
         } catch (e) { setError(e instanceof Error ? e.message : 'Error al cargar.'); }
         finally { setLoading(false); }
     }, [page, activeQ, pageSize]);

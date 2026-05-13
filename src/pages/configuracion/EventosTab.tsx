@@ -66,7 +66,7 @@ export default function EventosTab() {
             const res = await eventService.getEvents({ page, size_page: pageSize, name_or_document: activeQ || undefined });
             setRows(res.data ?? []);
             setTotal(res.pagination.total);
-            setTP(res.pagination.total_pages || 1);
+            setTP(Math.max(res.pagination.last_page, 1));
         } catch (e) { setError(e instanceof Error ? e.message : 'Error al cargar.'); }
         finally { setLoading(false); }
     }, [page, activeQ, pageSize]);

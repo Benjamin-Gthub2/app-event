@@ -137,7 +137,7 @@ export default function TalleresTab() {
             const workshops = isSearching ? filterRows(res.data ?? [], activeSearch) : (res.data ?? []);
             setRows(workshops);
             setTotal(isSearching ? workshops.length : res.pagination.total);
-            setTP(isSearching ? 1 : (res.pagination.total_pages || 1));
+            setTP(isSearching ? 1 : Math.max(res.pagination.last_page, 1));
 
             // load speakers for each workshop in parallel
             if (workshops.length > 0) {

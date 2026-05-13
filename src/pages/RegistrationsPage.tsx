@@ -815,7 +815,7 @@ export default function RegistrationsPage() {
         })
         : rows;
 
-    const totalPages = pagination?.total_pages ?? 1;
+    const totalPages = Math.max(pagination?.last_page ?? 1, 1);
 
     const handlePage = (p: number) => {
         if (p < 1 || p > totalPages || p === page) return;
