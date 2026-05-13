@@ -977,14 +977,15 @@ export default function RegistrationsPage() {
                                                 {reg.send_qr ? (
                                                     <span className="reg-send-badge reg-send-badge--sent"> <IconWhatsApp />Enviado</span>
                                                 ) : (
-                                                    <button
-                                                        className="reg-send-badge reg-send-badge--pending"
-                                                        onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ?? '' })}
-                                                        title="Enviar QR por WhatsApp"
-                                                    >
-                                                        <IconWhatsApp />
-                                                        No enviado
-                                                    </button>
+                                                    // <button
+                                                    //     className="reg-send-badge reg-send-badge--pending"
+                                                    //     onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ?? '' })}
+                                                    //     title="Enviar QR por WhatsApp"
+                                                    // >
+                                                    //     <IconWhatsApp />
+                                                    //     No enviado
+                                                    // </button>
+                                                    <span className="reg-send-badge">Deshabilitado por ahora</span>
                                                 )}
                                             </td>
                                             <td>
