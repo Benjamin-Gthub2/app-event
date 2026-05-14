@@ -19,6 +19,14 @@ interface AttendanceByIdResponse {
     status: number;
 }
 
+function buildXlsxFilename(eventName?: string, workshopName?: string, beneficiaryName?: string): string {
+    const parts = ['Reporte de Asistencias'];
+    if (eventName) parts.push(eventName);
+    if (workshopName) parts.push(workshopName);
+    if (beneficiaryName) parts.push(beneficiaryName);
+    return parts.join(' - ') + '.xlsx';
+}
+
 export const attendanceService = {
     getAttendances(params: GetAttendancesParams = {}): Promise<AttendancesResponse> {
         const query = new URLSearchParams();
@@ -88,7 +96,7 @@ export const attendanceService = {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Reporte de Asistencias.xlsx';
+        a.download = buildXlsxFilename(params.event_name, params.workshop_name, params.beneficiary_name);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
