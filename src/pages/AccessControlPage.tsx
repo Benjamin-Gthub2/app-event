@@ -77,6 +77,15 @@ const IconEmptyUsers = () => (
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+function fmtStartDate(dateStr: string | null): string | undefined {
+    if (!dateStr) return undefined;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return undefined;
+    return `${DIAS[d.getDay()]} ${d.getDate()}`;
+}
+
 function fullName(names: string, surname: string, lastName: string | null) {
     return [names, surname, lastName].filter(Boolean).join(' ');
 }
@@ -204,11 +213,14 @@ export default function AccessControlPage() {
 
     const workshopOptions = [
         { value: '', label: 'Todos los talleres' },
-        ...workshops.map((w) => ({
-            value: w.id,
-            label: w.name,
-            sublabel: w.shortname ?? undefined,
-        })),
+        ...workshops.map((w) => {
+            const parts = [w.code, fmtStartDate(w.start_date)].filter(Boolean);
+            return {
+                value: w.id,
+                label: w.name,
+                sublabel: parts.length ? parts.join(' · ') : undefined,
+            };
+        }),
     ];
 
     const beneficiaryOptions = [
