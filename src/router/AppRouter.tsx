@@ -1,64 +1,66 @@
-import {BrowserRouter, Routes, Route} from "react-router-dom";
-import LoginPage from "../pages/LoginPage";
-import Dashboard from "../pages/Dashboard.tsx";
-import QrScannerPage from "../pages/QrScannerPage";
-import RegistrationsPage from "../pages/RegistrationsPage";
-import AccessControlPage from "../pages/AccessControlPage";
-import TalleresPage from "../pages/TalleresPage";
-import ConfiguracionPage from "../pages/ConfiguracionPage";
-import PrivateRoute from "./PrivateRoute";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LoginPage from '../pages/LoginPage';
+import Dashboard from '../pages/Dashboard';
+import QrScannerPage from '../pages/QrScannerPage';
+import RegistrationsPage from '../pages/RegistrationsPage';
+import AccessControlPage from '../pages/AccessControlPage';
+import TalleresPage from '../pages/TalleresPage';
+import ConfiguracionPage from '../pages/ConfiguracionPage';
+import PrivateRoute from './PrivateRoute';
 
 export default function AppRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<LoginPage/>}/>
+                <Route path="/" element={<LoginPage />} />
                 <Route
                     path="/dashboard"
                     element={
                         <PrivateRoute>
-                            <Dashboard/>
+                            <Dashboard />
                         </PrivateRoute>
                     }
                 />
                 <Route
                     path="/qr-scanner"
                     element={
-                        <PrivateRoute>
-                            <QrScannerPage/>
+                        <PrivateRoute viewPath="/qr-scanner">
+                            <QrScannerPage />
                         </PrivateRoute>
                     }
                 />
                 <Route
                     path="/asistentes"
                     element={
-                        <PrivateRoute>
-                            <RegistrationsPage/>
+                        <PrivateRoute viewPath="/asistentes">
+                            <RegistrationsPage />
                         </PrivateRoute>
                     }
                 />
                 <Route
                     path="/accesos"
                     element={
-                        <PrivateRoute>
-                            <AccessControlPage/>
+                        <PrivateRoute viewPath="/accesos">
+                            <AccessControlPage />
                         </PrivateRoute>
                     }
                 />
                 <Route
                     path="/talleres"
                     element={
-                        <PrivateRoute>
-                            <TalleresPage/>
+                        <PrivateRoute viewPath="/talleres">
+                            <TalleresPage />
                         </PrivateRoute>
-                    }/>
+                    }
+                />
                 <Route
                     path="/configuracion"
                     element={
-                        <PrivateRoute>
-                            <ConfiguracionPage/>
+                        <PrivateRoute viewPath="/configuracion">
+                            <ConfiguracionPage />
                         </PrivateRoute>
-                    }/>
+                    }
+                />
             </Routes>
         </BrowserRouter>
     );
