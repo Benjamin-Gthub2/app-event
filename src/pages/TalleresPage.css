@@ -153,44 +153,45 @@
 .tal-live-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    background: #052e16;
-    border: 1px solid #166534;
-    color: #4ade80;
+    gap: 8px;
+    padding: 6px 16px 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #f43f3f, #c81a1a);
+    color: #fff;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 10px rgba(220, 38, 38, 0.45);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
 }
 
 .tal-live-badge--off {
-    background: #1c0a0a;
-    border-color: #7f1d1d;
-    color: #f87171;
+    background: rgba(107, 114, 128, 0.15);
+    border-color: rgba(107, 114, 128, 0.3);
+    box-shadow: none;
+    color: #6b7280;
 }
 
 .tal-live-dot {
-    width: 7px;
-    height: 7px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: #4ade80;
-    animation: tal-pulse 2s ease-in-out infinite;
+    background: #fff;
+    flex-shrink: 0;
+    animation: tal-pulse 1.6s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
 }
 
 @keyframes tal-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
-    50%       { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(0.65); opacity: 0.5; }
 }
 
 .tal-live-badge--off .tal-live-dot {
-    background: #f87171;
-    animation: tal-pulse-off 2s ease-in-out infinite;
-}
-
-@keyframes tal-pulse-off {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.4); }
-    50%       { box-shadow: 0 0 0 5px rgba(248,113,113,0); }
+    background: #6b7280;
+    animation: none;
+    box-shadow: none;
 }
 
 .tal-clock {
@@ -198,18 +199,20 @@
 }
 
 .tal-clock-time {
-    font-size: 19px;
+    font-size: 34px;
     font-weight: 800;
     color: var(--tal-num-accent);
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
 }
 
 .tal-clock-date {
-    font-size: 10.5px;
+    font-size: 13px;
     color: var(--tal-text-muted);
     font-weight: 500;
     text-transform: capitalize;
+    margin-top: 2px;
 }
 
 .tal-refresh-badge {
@@ -344,7 +347,7 @@
 }
 .tal-filter-btn--clear:hover { background: var(--tal-icon-btn-hover); }
 
-.tal-filter-group--search { flex: 1; min-width: 180px; }
+.tal-filter-group--search { flex: 0 1 220px; min-width: 160px; }
 
 .tal-filter-search-input {
     height: 36px;
