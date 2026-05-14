@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -139,6 +140,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, title = 'Inicio', fullBleed = false }: DashboardLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
     const { logout, views, person } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
@@ -150,6 +152,10 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
     const displayName = person
         ? [person.names, person.surname, person.last_name].filter(Boolean).join(' ').trim() || 'Usuario'
         : 'Usuario';
+
+    const initials = [person?.names, person?.surname]
+        .map(s => s?.trim()[0]?.toUpperCase() ?? '')
+        .join('') || 'U';
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -164,8 +170,59 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
         setSidebarOpen(false);
     };
 
+    const profileModal = profileOpen && createPortal(
+        <div className="dbl-pm-overlay" onClick={() => setProfileOpen(false)}>
+            <div className="dbl-pm-card" onClick={e => e.stopPropagation()}>
+                <button className="dbl-pm-close" onClick={() => setProfileOpen(false)} aria-label="Cerrar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+
+                <div className="dbl-pm-avatar">{initials}</div>
+                <h2 className="dbl-pm-name">{displayName}</h2>
+
+                <div className="dbl-pm-fields">
+                    {person?.document && (
+                        <div className="dbl-pm-field">
+                            <span className="dbl-pm-field-label">Documento</span>
+                            <span className="dbl-pm-field-value">{person.document}</span>
+                        </div>
+                    )}
+                    {person?.phone && (
+                        <div className="dbl-pm-field">
+                            <span className="dbl-pm-field-label">Teléfono</span>
+                            <span className="dbl-pm-field-value">{person.phone}</span>
+                        </div>
+                    )}
+                    {person?.email && (
+                        <div className="dbl-pm-field">
+                            <span className="dbl-pm-field-label">Correo</span>
+                            <span className="dbl-pm-field-value">{person.email}</span>
+                        </div>
+                    )}
+                    {person?.gender && (
+                        <div className="dbl-pm-field">
+                            <span className="dbl-pm-field-label">Género</span>
+                            <span className="dbl-pm-field-value">{person.gender}</span>
+                        </div>
+                    )}
+                    {!person?.document && !person?.phone && !person?.email && (
+                        <p className="dbl-pm-empty">Sin datos adicionales registrados</p>
+                    )}
+                </div>
+
+                <button className="dbl-pm-btn-close" onClick={() => setProfileOpen(false)}>
+                    Cerrar
+                </button>
+            </div>
+        </div>,
+        document.body,
+    );
+
     return (
         <div className="dbl-wrapper">
+            {profileModal}
             {sidebarOpen && (
                 <div className="dbl-overlay" onClick={() => setSidebarOpen(false)} />
             )}
@@ -259,7 +316,7 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
                                 <div className="dbl-dropdown">
                                     <button
                                         className="dbl-dropdown-item"
-                                        onClick={() => setUserMenuOpen(false)}
+                                        onClick={() => { setUserMenuOpen(false); setProfileOpen(true); }}
                                     >
                                         <IconUser /> Ver Perfil
                                     </button>
