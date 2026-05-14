@@ -139,8 +139,17 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, title = 'Inicio', fullBleed = false }: DashboardLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const { logout } = useAuth();
+    const { logout, views, person } = useAuth();
     const { theme, toggleTheme } = useTheme();
+
+    const allowedPaths = new Set(views.map(v => v.url));
+    const visibleNavItems = NAV_ITEMS.filter(
+        item => item.path === '/dashboard' || allowedPaths.has(item.path),
+    );
+
+    const displayName = person
+        ? [person.names, person.surname, person.last_name].filter(Boolean).join(' ').trim() || 'Usuario'
+        : 'Usuario';
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -173,7 +182,7 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
 
                 <nav className="dbl-nav">
                     <ul>
-                        {NAV_ITEMS.map(({ id, label, Icon, path }) => {
+                        {visibleNavItems.map(({ id, label, Icon, path }) => {
                             const active = location.pathname === path;
 
                             return (
@@ -239,8 +248,7 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
                                     <IconUser />
                                 </div>
                                 <div className="dbl-user-info">
-                                    <span className="dbl-user-name">Super Admin</span>
-                                    <span className="dbl-user-role">Administrador</span>
+                                    <span className="dbl-user-name">{displayName}</span>
                                 </div>
                                 <span className={`dbl-chevron ${userMenuOpen ? 'dbl-chevron--up' : ''}`}>
                                     <IconChevron />

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { userService } from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import type { AppView, UserPerson } from '../../types/auth.types';
 import './Login.css';
 
 const SunIcon = () => (
@@ -58,7 +60,20 @@ const Login: React.FC = () => {
 
         try {
             const response = await authService.login({ username, password });
-            login(response.data);
+            const token = response.data;
+
+            // Guardar token antes de llamar al siguiente endpoint autenticado
+            authService.saveToken(token);
+
+            let views: AppView[] = [];
+            let person: UserPerson | null = null;
+            try {
+                const viewsRes = await userService.getViews();
+                views = viewsRes.data?.views ?? [];
+                person = viewsRes.data?.person ?? null;
+            } catch { /* si falla, el usuario igual accede */ }
+
+            login(token, views, person);
             navigate('/dashboard');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al iniciar sesión.');

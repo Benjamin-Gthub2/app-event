@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
+import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -123,6 +124,12 @@ const MODULES = [
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const { views } = useAuth();
+
+    const allowedPaths = new Set(views.map(v => v.url));
+    const visibleModules = views.length > 0
+        ? MODULES.filter(m => allowedPaths.has(m.path))
+        : MODULES;
 
     return (
         <DashboardLayout title="Inicio">
@@ -132,7 +139,7 @@ export default function Dashboard() {
             </div>
 
             <div className="db-grid">
-                {MODULES.map((mod) => (
+                {visibleModules.map((mod) => (
                     <button
                         key={mod.id}
                         className="db-card"
