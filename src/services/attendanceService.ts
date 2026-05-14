@@ -48,7 +48,11 @@ export const attendanceService = {
         await apiClient.delete<unknown>(`/event/attendances/${id}`);
     },
 
-    async downloadXlsxReport(params: Omit<GetAttendancesParams, 'page' | 'size_page'> = {}): Promise<void> {
+    async downloadXlsxReport(params: Omit<GetAttendancesParams, 'page' | 'size_page'> & {
+        event_name?: string;
+        workshop_name?: string;
+        beneficiary_name?: string;
+    } = {}): Promise<void> {
         const query = new URLSearchParams();
         if (params.event_id) query.set('event_id', params.event_id);
         if (params.workshop_id) query.set('workshop_id', params.workshop_id);
@@ -56,6 +60,9 @@ export const attendanceService = {
         if (params.start_date) query.set('start_date', params.start_date);
         if (params.end_date) query.set('end_date', params.end_date);
         if (params.searchvalue) query.set('searchvalue', params.searchvalue);
+        if (params.event_name) query.set('event_name', params.event_name);
+        if (params.workshop_name) query.set('workshop_name', params.workshop_name);
+        if (params.beneficiary_name) query.set('beneficiary_name', params.beneficiary_name);
         const qs = query.toString();
 
         const headers: Record<string, string> = {};

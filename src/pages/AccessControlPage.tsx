@@ -214,11 +214,21 @@ export default function AccessControlPage() {
         setDownloading(true);
         setError(null);
         try {
+            const eventName = eventId ? events.find((ev) => ev.id === eventId)?.name : undefined;
+            const workshopName = workshopId ? workshops.find((w) => w.id === workshopId)?.name : undefined;
+            const beneficiaryPerson = beneficiaryId ? people.find((p) => p.id === beneficiaryId) : undefined;
+            const beneficiaryName = beneficiaryPerson
+                ? fullName(beneficiaryPerson.names, beneficiaryPerson.surname, beneficiaryPerson.last_name)
+                : undefined;
+
             await attendanceService.downloadXlsxReport({
                 event_id: eventId || undefined,
                 workshop_id: workshopId || undefined,
                 beneficiary_id: beneficiaryId || undefined,
                 searchvalue: searchValue.trim() || undefined,
+                event_name: eventName,
+                workshop_name: workshopName,
+                beneficiary_name: beneficiaryName,
             });
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error al generar el reporte.');
