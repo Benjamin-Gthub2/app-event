@@ -390,6 +390,10 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1;
 }
 
 .dbl-user-info {

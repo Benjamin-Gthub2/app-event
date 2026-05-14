@@ -302,7 +302,7 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                             >
                                 <div className="dbl-user-avatar">
-                                    <IconUser />
+                                    {initials}
                                 </div>
                                 <div className="dbl-user-info">
                                     <span className="dbl-user-name">{displayName}</span>
