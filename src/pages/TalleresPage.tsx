@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import './TalleresPage.css';
 import { workshopService } from '../services/workshopService';
 import type { WorkshopSums } from '../types/workshop.types';
-import { useMqttWorkshops } from '../hooks/useMqttWorkshops';
+import { useMqttAttendances } from '../hooks/useMqttAttendances';
 import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { useTheme } from '../context/ThemeContext';
@@ -143,7 +143,7 @@ export default function TalleresPage() {
         }
     }, [activeFilters]);
 
-    const { connected: mqttConnected } = useMqttWorkshops(fetchData);
+    const { connected: mqttConnected } = useMqttAttendances(fetchData);
     useMqttRegistrations(fetchData);
 
     useEffect(() => { fetchData(); }, [fetchData]);
@@ -391,6 +391,7 @@ export default function TalleresPage() {
                                         {timeLabel && <p className="tal-card-meta">{timeLabel}</p>}
                                         {w.place && (
                                             <div className="tal-card-place">
+                                                SALA:
                                                 <IconPin />
                                                 {w.place}
                                             </div>
