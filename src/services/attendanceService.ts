@@ -1,5 +1,7 @@
-import { apiClient } from './apiClient';
+import { apiClient, API_BASE } from './apiClient';
 import type { Attendance, AttendancesResponse, CreateAttendanceBody } from '../types/attendance.types';
+
+const TENANT_KEY = 'x_tenant_id';
 
 export interface GetAttendancesParams {
     page?: number;
@@ -44,5 +46,45 @@ export const attendanceService = {
 
     async deleteAttendance(id: string): Promise<void> {
         await apiClient.delete<unknown>(`/event/attendances/${id}`);
+    },
+
+    async downloadXlsxReport(params: Omit<GetAttendancesParams, 'page' | 'size_page'> = {}): Promise<void> {
+        const query = new URLSearchParams();
+        if (params.event_id) query.set('event_id', params.event_id);
+        if (params.workshop_id) query.set('workshop_id', params.workshop_id);
+        if (params.beneficiary_id) query.set('beneficiary_id', params.beneficiary_id);
+        if (params.start_date) query.set('start_date', params.start_date);
+        if (params.end_date) query.set('end_date', params.end_date);
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
+        const qs = query.toString();
+
+        const headers: Record<string, string> = {};
+        const token = localStorage.getItem('auth_token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const tenantId = localStorage.getItem(TENANT_KEY);
+        if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+        const response = await fetch(
+            `${API_BASE}/event/attendances/xlsx_report${qs ? `?${qs}` : ''}`,
+            { headers },
+        );
+
+        if (response.status === 401) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem(TENANT_KEY);
+            window.location.href = '/';
+            throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.');
+        }
+        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Reporte de Asistencias.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     },
 };
