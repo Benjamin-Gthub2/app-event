@@ -80,7 +80,7 @@ export default function PersonasTab() {
     const fetch = useCallback(async () => {
         setLoading(true); setError(null);
         try {
-            const res = await peopleService.getPeople({ page, size_page: pageSize, search_name: activeQ || undefined });
+            const res = await peopleService.getPeople({ page, size_page: pageSize, searchvalue: activeQ || undefined });
             setRows(res.data ?? []);
             const tot = res.pagination.total;
             setTotal(tot);

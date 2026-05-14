@@ -4,6 +4,7 @@ import type { EventType, EventTypesResponse, EventTypeResponse } from '../types/
 export interface GetEventTypesParams {
     page?: number;
     size_page?: number;
+    searchvalue?: string;
 }
 
 export interface CreateEventTypeBody {
@@ -23,6 +24,7 @@ export const eventTypeService = {
         const query = new URLSearchParams();
         if (params.page !== undefined) query.set('page', String(params.page));
         if (params.size_page !== undefined) query.set('size_page', String(params.size_page));
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<EventTypesResponse>(`/event/event-types${qs ? `?${qs}` : ''}`);
     },

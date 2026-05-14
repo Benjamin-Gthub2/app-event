@@ -29,7 +29,8 @@
       "Bash(powershell -Command \"[Convert]::ToBase64String\\([IO.File]::ReadAllBytes\\('logoCumbre.png'\\)\\)\")",
       "Bash(grep *)",
       "Bash(Select-Object Name, FullName)",
-      "Bash(ls -la \"C:\\\\\\\\Users\\\\\\\\Benjamin\\\\\\\\dev\\\\\\\\smartone\\\\\\\\otros\\\\\\\\app-event\")"
+      "Bash(ls -la \"C:\\\\\\\\Users\\\\\\\\Benjamin\\\\\\\\dev\\\\\\\\smartone\\\\\\\\otros\\\\\\\\app-event\")",
+      "Bash(powershell -Command \"Set-Location 'C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event'; go build ./... 2>&1\")"
     ]
   }
 }

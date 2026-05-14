@@ -113,31 +113,18 @@ export default function TalleresTab() {
         }).catch(() => {}).finally(() => setLS(false));
     }, []);
 
-    const filterRows = (list: Workshop[], q: string): Workshop[] => {
-        if (!q) return list;
-        const lower = q.toLowerCase();
-        return list.filter(w =>
-            w.name.toLowerCase().includes(lower) ||
-            (w.shortname ?? '').toLowerCase().includes(lower) ||
-            (w.code ?? '').toLowerCase().includes(lower) ||
-            (w.place ?? '').toLowerCase().includes(lower) ||
-            (w.workshop_type?.description ?? '').toLowerCase().includes(lower) ||
-            (w.event?.name ?? '').toLowerCase().includes(lower)
-        );
-    };
-
     const fetchWorkshops = useCallback(async () => {
         setLoading(true); setError(null);
         try {
-            const isSearching = activeSearch.trim().length > 0;
-            const params = isSearching
-                ? { size_page: 5000, event_id: filterEvent || undefined }
-                : { page, size_page: pageSize, event_id: filterEvent || undefined };
-            const res = await workshopService.getWorkshops(params);
-            const workshops = isSearching ? filterRows(res.data ?? [], activeSearch) : (res.data ?? []);
-            setRows(workshops);
-            setTotal(isSearching ? workshops.length : res.pagination.total);
-            setTP(isSearching ? 1 : Math.max(res.pagination.last_page, 1));
+            const res = await workshopService.getWorkshops({
+                page,
+                size_page: pageSize,
+                event_id: filterEvent || undefined,
+                searchvalue: activeSearch.trim() || undefined,
+            });
+            setRows(res.data ?? []);
+            setTotal(res.pagination.total);
+            setTP(Math.max(res.pagination.last_page, 1));
 
             // load speakers for each workshop in parallel
             if (workshops.length > 0) {

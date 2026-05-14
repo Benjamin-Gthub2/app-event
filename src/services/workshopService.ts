@@ -6,6 +6,7 @@ export interface GetWorkshopsParams {
     size_page?: number;
     event_id?: string;
     type_id?: string;
+    searchvalue?: string;
 }
 
 export interface CreateWorkshopBody {
@@ -38,6 +39,7 @@ export const workshopService = {
         if (params.size_page !== undefined) query.set('size_page', String(params.size_page));
         if (params.event_id) query.set('event_id', params.event_id);
         if (params.type_id) query.set('type_id', params.type_id);
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<WorkshopsResponse>(`/event/workshops${qs ? `?${qs}` : ''}`);
     },

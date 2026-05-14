@@ -4,6 +4,7 @@ import type { UserType, UserTypesResponse, UserTypeResponse } from '../types/use
 export interface GetUserTypesParams {
     page?: number;
     size_page?: number;
+    searchvalue?: string;
 }
 
 export interface CreateUserTypeBody {
@@ -23,6 +24,7 @@ export const userTypeService = {
         const query = new URLSearchParams();
         if (params.page !== undefined) query.set('page', String(params.page));
         if (params.size_page !== undefined) query.set('size_page', String(params.size_page));
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<UserTypesResponse>(`/core/user_types${qs ? `?${qs}` : ''}`);
     },

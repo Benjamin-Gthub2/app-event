@@ -9,6 +9,7 @@ export interface GetAttendancesParams {
     beneficiary_id?: string;
     start_date?: string;
     end_date?: string;
+    searchvalue?: string;
 }
 
 interface AttendanceByIdResponse {
@@ -26,6 +27,7 @@ export const attendanceService = {
         if (params.beneficiary_id) query.set('beneficiary_id', params.beneficiary_id);
         if (params.start_date) query.set('start_date', params.start_date);
         if (params.end_date) query.set('end_date', params.end_date);
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<AttendancesResponse>(`/event/attendances${qs ? `?${qs}` : ''}`);
     },

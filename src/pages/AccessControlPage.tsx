@@ -105,6 +105,7 @@ export default function AccessControlPage() {
     const [eventId, setEventId] = useState('');
     const [workshopId, setWorkshopId] = useState('');
     const [beneficiaryId, setBeneficiaryId] = useState('');
+    const [searchValue, setSearchValue] = useState('');
 
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [loadingWorkshops, setLoadingWorkshops] = useState(false);
@@ -152,6 +153,7 @@ export default function AccessControlPage() {
         setEventId('');
         setWorkshopId('');
         setBeneficiaryId('');
+        setSearchValue('');
         setRows([]);
         setTotalCount(0);
         setPage(1);
@@ -170,6 +172,7 @@ export default function AccessControlPage() {
                 event_id: eventId || undefined,
                 workshop_id: workshopId || undefined,
                 beneficiary_id: beneficiaryId || undefined,
+                searchvalue: searchValue.trim() || undefined,
             });
             setRows(res.data ?? []);
             const total = res.pagination?.total ?? (res.data?.length ?? 0);
@@ -181,7 +184,7 @@ export default function AccessControlPage() {
         } finally {
             setLoading(false);
         }
-    }, [eventId, workshopId, beneficiaryId]);
+    }, [eventId, workshopId, beneficiaryId, searchValue]);
 
     const goToPage = (p: number) => {
         if (p < 1 || p > totalPages || p === page) return;
@@ -286,6 +289,20 @@ export default function AccessControlPage() {
                             loading={loadingPeople}
                             emptyText="Sin beneficiarios disponibles"
                         />
+                    </div>
+
+                    <div className="ac-filter-field">
+                        <label className="ac-filter-label">Buscar texto</label>
+                        <div className="ac-search-wrap">
+                            <span className="ac-search-icon"><IconSearch /></span>
+                            <input
+                                className="ac-search-input"
+                                type="text"
+                                placeholder="Nombre, apellido, documento..."
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
 

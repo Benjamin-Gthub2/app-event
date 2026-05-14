@@ -4,6 +4,7 @@ import type { WorkshopType, WorkshopTypesResponse, WorkshopTypeResponse } from '
 export interface GetWorkshopTypesParams {
     page?: number;
     size_page?: number;
+    searchvalue?: string;
 }
 
 export interface CreateWorkshopTypeBody {
@@ -23,6 +24,7 @@ export const workshopTypeService = {
         const query = new URLSearchParams();
         if (params.page !== undefined) query.set('page', String(params.page));
         if (params.size_page !== undefined) query.set('size_page', String(params.size_page));
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<WorkshopTypesResponse>(`/event/workshop-types${qs ? `?${qs}` : ''}`);
     },

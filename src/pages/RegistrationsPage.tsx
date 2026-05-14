@@ -760,6 +760,7 @@ export default function RegistrationsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [activeSearch, setActiveSearch] = useState('');
     const [qrModal, setQrModal] = useState<{ id: string; name: string } | null>(null);
     const [whatsappModal, setWhatsappModal] = useState<{ id: string; name: string; phone: string } | null>(null);
     const [addModal, setAddModal] = useState(false);
@@ -772,11 +773,20 @@ export default function RegistrationsPage() {
             .catch(() => {/* non-blocking */});
     }, []);
 
+    useEffect(() => {
+        const t = setTimeout(() => { setActiveSearch(search); setPage(1); }, 400);
+        return () => clearTimeout(t);
+    }, [search]);
+
     const fetchData = useCallback(async (targetPage: number) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await registrationService.getRegistrations({ page: targetPage, size_page: pageSize });
+            const res = await registrationService.getRegistrations({
+                page: targetPage,
+                size_page: pageSize,
+                searchvalue: activeSearch.trim() || undefined,
+            });
             setRows(res.data ?? []);
             setPagination(res.pagination ?? null);
         } catch (e) {
@@ -784,7 +794,7 @@ export default function RegistrationsPage() {
         } finally {
             setLoading(false);
         }
-    }, [pageSize]);
+    }, [pageSize, activeSearch]);
 
     const { connected: mqttConnected } = useMqttRegistrations(() => fetchData(page));
 
@@ -804,16 +814,6 @@ export default function RegistrationsPage() {
             r.id === registrationId ? { ...r, send_qr: true } : r
         ));
     };
-
-    const filtered = search.trim()
-        ? rows.filter((r) => {
-            const name = fullName(r.beneficiary.names, r.beneficiary.surname, r.beneficiary.last_name).toLowerCase();
-            const doc = r.beneficiary.document.toLowerCase();
-            const eventName = r.event.name.toLowerCase();
-            const q = search.toLowerCase();
-            return name.includes(q) || doc.includes(q) || eventName.includes(q);
-        })
-        : rows;
 
     const totalPages = Math.max(pagination?.last_page ?? 1, 1);
 
@@ -914,22 +914,22 @@ export default function RegistrationsPage() {
                                         ))}
                                     </tr>
                                 ))
-                            ) : filtered.length === 0 ? (
+                            ) : rows.length === 0 ? (
                                 <tr className="reg-state-row">
                                     <td colSpan={COLS as number}>
                                         <div className="reg-state-icon"><IconUsers /></div>
                                         <p className="reg-state-title">
-                                            {search ? 'Sin resultados' : 'Sin inscripciones'}
+                                            {activeSearch ? 'Sin resultados' : 'Sin inscripciones'}
                                         </p>
                                         <p className="reg-state-desc">
-                                            {search
+                                            {activeSearch
                                                 ? 'No se encontró ningún registro con esa búsqueda.'
                                                 : 'No hay inscripciones registradas todavía.'}
                                         </p>
                                     </td>
                                 </tr>
                             ) : (
-                                filtered.map((reg, idx) => {
+                                rows.map((reg, idx) => {
                                     const b = reg.beneficiary;
                                     const cb = reg.created_by;
                                     const rowNum = (page - 1) * pageSize + idx + 1;

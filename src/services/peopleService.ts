@@ -7,6 +7,7 @@ export interface GetPeopleParams {
     search_name?: string;
     document?: string;
     document_type_id?: string;
+    searchvalue?: string;
 }
 
 export interface CreatePersonBody {
@@ -43,6 +44,7 @@ export const peopleService = {
         if (params.search_name) query.set('search_name', params.search_name);
         if (params.document) query.set('document', params.document);
         if (params.document_type_id) query.set('document_type_id', params.document_type_id);
+        if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<PeopleResponse>(`/event/people/${qs ? `?${qs}` : ''}`);
     },
