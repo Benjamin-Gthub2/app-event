@@ -122,17 +122,18 @@ export default function TalleresTab() {
                 event_id: filterEvent || undefined,
                 searchvalue: activeSearch.trim() || undefined,
             });
-            setRows(res.data ?? []);
+            const fetched = res.data ?? [];
+            setRows(fetched);
             setTotal(res.pagination.total);
             setTP(Math.max(res.pagination.last_page, 1));
 
             // load speakers for each workshop in parallel
-            if (workshops.length > 0) {
+            if (fetched.length > 0) {
                 const results = await Promise.allSettled(
-                    workshops.map(w => workshopSpeakerService.getWorkshopSpeakers({ workshop_id: w.id, size_page: 100 }))
+                    fetched.map(w => workshopSpeakerService.getWorkshopSpeakers({ workshop_id: w.id, size_page: 100 }))
                 );
                 const map: Record<string, WorkshopSpeaker[]> = {};
-                workshops.forEach((w, i) => {
+                fetched.forEach((w, i) => {
                     const r = results[i];
                     map[w.id] = r.status === 'fulfilled' ? (r.value.data ?? []) : [];
                 });
