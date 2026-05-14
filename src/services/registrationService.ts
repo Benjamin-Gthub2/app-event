@@ -1,5 +1,5 @@
 import { apiClient, API_BASE } from './apiClient';
-import type { Registration, RegistrationsResponse } from '../types/registration.types';
+import type { Registration, RegistrationsResponse, RegistrationsByEventResponse } from '../types/registration.types';
 
 export interface GetRegistrationsParams {
     page?: number;
@@ -42,6 +42,10 @@ export const registrationService = {
     async getRegistrationById(id: string): Promise<Registration> {
         const res = await apiClient.get<RegistrationByIdResponse>(`/event/registrations/${id}`);
         return res.data;
+    },
+
+    async getRegistrationsByEvent(eventId: string): Promise<RegistrationsByEventResponse> {
+        return apiClient.get<RegistrationsByEventResponse>(`/event/registrations/by_event/${eventId}`);
     },
 
     async createRegistration(body: CreateRegistrationBody): Promise<string> {

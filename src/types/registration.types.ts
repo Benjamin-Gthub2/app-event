@@ -75,3 +75,29 @@ export interface RegistrationsResponse {
     pagination: Pagination;
     status: number;
 }
+
+export interface BeneficiaryByEvent {
+    id: string;
+    type_document: TypeDocument;
+    document: string;
+    names: string;
+    surname: string;
+    last_name: string | null;
+    phone: string | null;
+}
+
+export interface RegistrationByEvent {
+    id: string;
+    send_qr: boolean;
+    send_certificate: boolean;
+    created_at: string | null;
+    status: Status;
+    event: RegistrationEvent;
+    beneficiary: BeneficiaryByEvent;
+}
+
+export interface RegistrationsByEventResponse {
+    data: RegistrationByEvent[];
+    pagination: Pagination;
+    status: number;
+}

@@ -7,7 +7,7 @@ import { registrationService } from '../services/registrationService';
 import { attendanceService } from '../services/attendanceService';
 import { eventService } from '../services/eventService';
 import { workshopService } from '../services/workshopService';
-import type { Registration } from '../types/registration.types';
+import type { Registration, RegistrationByEvent } from '../types/registration.types';
 import type { Event } from '../types/event.types';
 import type { Workshop } from '../types/workshop.types';
 import type { SelectOption } from '../components/SearchableSelect';
@@ -30,10 +30,12 @@ function formatDate(iso: string | null) {
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
+type ScanMode = 'scan' | 'list';
+
 type ScanState =
     | { status: 'idle' }
     | { status: 'loading'; id: string }
-    | { status: 'found'; registration: Registration }
+    | { status: 'found'; registration: Registration; fromMode: ScanMode }
     | { status: 'notfound'; id: string }
     | { status: 'error'; message: string };
 
@@ -133,6 +135,8 @@ const AttendanceButton: React.FC<AttendanceButtonProps> = ({ workshopId, benefic
 const QrScannerPage: React.FC = () => {
     const [scanKey, setScanKey] = useState(0);
     const [state, setState] = useState<ScanState>({ status: 'idle' });
+    const [mode, setMode] = useState<ScanMode>('scan');
+
     // Event / workshop selectors
     const [events, setEvents] = useState<Event[]>([]);
     const [workshops, setWorkshops] = useState<Workshop[]>([]);
@@ -141,6 +145,11 @@ const QrScannerPage: React.FC = () => {
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [workshopsLoaded, setWorkshopsLoaded] = useState(false);
     const loadingWorkshops = !!selectedEventId && !workshopsLoaded;
+
+    // Registrations list for list mode
+    const [registrationsList, setRegistrationsList] = useState<RegistrationByEvent[]>([]);
+    const [loadingList, setLoadingList] = useState(false);
+    const [selectedListId, setSelectedListId] = useState('');
 
     useEffect(() => {
         eventService.getEvents({ size_page: 100 })
@@ -157,11 +166,25 @@ const QrScannerPage: React.FC = () => {
             .finally(() => setWorkshopsLoaded(true));
     }, [selectedEventId]);
 
+    useEffect(() => {
+        if (!selectedEventId) {
+            setRegistrationsList([]);
+            return;
+        }
+        setLoadingList(true);
+        registrationService.getRegistrationsByEvent(selectedEventId)
+            .then(res => setRegistrationsList(res.data ?? []))
+            .catch(() => setRegistrationsList([]))
+            .finally(() => setLoadingList(false));
+    }, [selectedEventId]);
+
     const handleEventChange = (eventId: string) => {
         setSelectedEventId(eventId);
         setSelectedWorkshopId('');
         setWorkshops([]);
         setWorkshopsLoaded(false);
+        setSelectedListId('');
+        setRegistrationsList([]);
     };
 
     const eventOptions: SelectOption[] = events.map(e => ({
@@ -176,18 +199,24 @@ const QrScannerPage: React.FC = () => {
         sublabel: w.code ?? undefined,
     }));
 
+    const registrationListOptions: SelectOption[] = registrationsList.map(r => ({
+        value: r.id,
+        label: fullName(r.beneficiary.names, r.beneficiary.surname, r.beneficiary.last_name),
+        sublabel: `${r.beneficiary.type_document.abbreviated_description} · ${r.beneficiary.document}`,
+    }));
+
     const canScan = !!selectedEventId && !!selectedWorkshopId;
 
-    const handleScan = async (id: string) => {
+    const handleScan = async (id: string, fromMode: ScanMode = 'scan') => {
         setState({ status: 'loading', id });
         try {
             const registration = await registrationService.getRegistrationById(id);
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            setState({ status: 'found', registration });
+            if (fromMode === 'scan' && navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            setState({ status: 'found', registration, fromMode });
         } catch (e) {
             const msg = e instanceof Error ? e.message : '';
             if (msg.includes('404') || msg.includes('400')) {
-                if (navigator.vibrate) navigator.vibrate([300]);
+                if (fromMode === 'scan' && navigator.vibrate) navigator.vibrate([300]);
                 setState({ status: 'notfound', id });
             } else {
                 setState({ status: 'error', message: msg || 'Error al consultar el registro.' });
@@ -198,6 +227,7 @@ const QrScannerPage: React.FC = () => {
     const handleReset = () => {
         setState({ status: 'idle' });
         setScanKey(k => k + 1);
+        setSelectedListId('');
     };
 
     // ── Loading ──────────────────────────────────────────────────────────────
@@ -221,9 +251,8 @@ const QrScannerPage: React.FC = () => {
     // ── Found ────────────────────────────────────────────────────────────────
 
     if (state.status === 'found') {
-        const { registration: r } = state;
+        const { registration: r, fromMode } = state;
         const b = r.beneficiary;
-
         const selectedWorkshop = workshops.find(w => w.id === selectedWorkshopId);
 
         return (
@@ -276,14 +305,6 @@ const QrScannerPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/*{allStatuses.length > 0 && (*/}
-                        {/*    <StatusChanger*/}
-                        {/*        registration={r}*/}
-                        {/*        allStatuses={allStatuses}*/}
-                        {/*        onStatusUpdated={handleStatusUpdated}*/}
-                        {/*    />*/}
-                        {/*)}*/}
-
                         {selectedWorkshopId && (
                             <AttendanceButton
                                 workshopId={selectedWorkshopId}
@@ -306,7 +327,7 @@ const QrScannerPage: React.FC = () => {
                         </div>
 
                         <button onClick={handleReset} className="qr-btn-back qr-btn-back--success">
-                            ← Escanear otro código
+                            {fromMode === 'scan' ? '← Escanear otro código' : '← Buscar otro registrado'}
                         </button>
                     </div>
                 </div>
@@ -360,12 +381,14 @@ const QrScannerPage: React.FC = () => {
         );
     }
 
-    // ── Idle / scanner ───────────────────────────────────────────────────────
+    // ── Idle ─────────────────────────────────────────────────────────────────
 
     return (
         <DashboardLayout title="Escáner QR">
             <div className="qr-page qr-page--embedded">
                 <div className="qr-scanner-card">
+
+                    {/* Header */}
                     <div className="qr-scanner-header">
                         <div className="qr-scanner-icon-wrapper">
                             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -376,11 +399,38 @@ const QrScannerPage: React.FC = () => {
                             </svg>
                         </div>
                         <div>
-                            <h1 className="qr-scanner-title">Escanear QR</h1>
-                            <p className="qr-scanner-subtitle">Selecciona el evento y taller antes de escanear</p>
+                            <h1 className="qr-scanner-title">Registro de Asistencias</h1>
+                            <p className="qr-scanner-subtitle">
+                                {mode === 'scan'
+                                    ? 'Selecciona el evento y taller antes de escanear'
+                                    : 'Selecciona el evento para buscar en la lista'}
+                            </p>
                         </div>
                     </div>
 
+                    {/* Mode toggle */}
+                    <div className="qr-mode-toggle">
+                        <button
+                            className={`qr-mode-btn${mode === 'scan' ? ' qr-mode-btn--active' : ''}`}
+                            onClick={() => setMode('scan')}
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3" />
+                            </svg>
+                            Escáner QR
+                        </button>
+                        <button
+                            className={`qr-mode-btn${mode === 'list' ? ' qr-mode-btn--active' : ''}`}
+                            onClick={() => setMode('list')}
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><circle cx="3" cy="6" r="1.2" fill="currentColor" stroke="none" /><circle cx="3" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="3" cy="18" r="1.2" fill="currentColor" stroke="none" />
+                            </svg>
+                            Buscar en lista
+                        </button>
+                    </div>
+
+                    {/* Shared selectors */}
                     <div className="qr-selectors">
                         <div className="qr-selector-field">
                             <label className="qr-selector-label">Evento</label>
@@ -409,24 +459,47 @@ const QrScannerPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {canScan ? (
-                        <>
-                            <div className="qr-scanner-viewport">
-                                <QrScanner onScan={handleScan} scanKey={scanKey} />
-                                <div className="qr-corner qr-corner--tl" />
-                                <div className="qr-corner qr-corner--tr" />
-                                <div className="qr-corner qr-corner--bl" />
-                                <div className="qr-corner qr-corner--br" />
+                    {/* Mode-specific content */}
+                    {mode === 'scan' ? (
+                        canScan ? (
+                            <>
+                                <div className="qr-scanner-viewport">
+                                    <QrScanner onScan={handleScan} scanKey={scanKey} />
+                                    <div className="qr-corner qr-corner--tl" />
+                                    <div className="qr-corner qr-corner--tr" />
+                                    <div className="qr-corner qr-corner--bl" />
+                                    <div className="qr-corner qr-corner--br" />
+                                </div>
+                                <p className="qr-scanner-hint">
+                                    El escaneo es automático al detectar el código
+                                </p>
+                            </>
+                        ) : (
+                            <div className="qr-scanner-blocked">
+                                <p>Selecciona un evento y un taller para activar el escáner</p>
                             </div>
-                            <p className="qr-scanner-hint">
-                                El escaneo es automático al detectar el código
-                            </p>
-                        </>
+                        )
                     ) : (
-                        <div className="qr-scanner-blocked">
-                            <p>Selecciona un evento y un taller para activar el escáner</p>
-                        </div>
+                        !selectedEventId ? (
+                            <div className="qr-scanner-blocked">
+                                <p>Selecciona un evento para ver la lista de inscritos</p>
+                            </div>
+                        ) : (
+                            <div className="qr-selector-field">
+                                <label className="qr-selector-label">Inscrito</label>
+                                <SearchableSelect
+                                    options={registrationListOptions}
+                                    value={selectedListId}
+                                    onChange={id => { setSelectedListId(id); if (id) handleScan(id, 'list'); }}
+                                    placeholder="Buscar por nombre o documento..."
+                                    searchPlaceholder="Nombre o documento..."
+                                    loading={loadingList}
+                                    emptyText="Sin inscritos para este evento"
+                                />
+                            </div>
+                        )
                     )}
+
                 </div>
             </div>
         </DashboardLayout>
