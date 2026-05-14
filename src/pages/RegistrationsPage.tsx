@@ -981,20 +981,44 @@ export default function RegistrationsPage() {
                                                     </b>
                                                 </span>
                                             </td>
+                                            {/*<td>*/}
+                                            {/*    {b.type_document.abbreviated_description=='DNI'?(*/}
+                                            {/*        reg.send_qr ? (*/}
+                                            {/*            <span className="reg-send-badge reg-send-badge--sent"> <IconWhatsApp />Enviado</span>*/}
+                                            {/*        ) : (*/}
+                                            {/*            <button*/}
+                                            {/*                className="reg-send-badge reg-send-badge--pending"*/}
+                                            {/*                onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone? "51"+b.phone: '' })}*/}
+                                            {/*                title="Enviar QR por WhatsApp"*/}
+                                            {/*            >*/}
+                                            {/*                <IconWhatsApp />*/}
+                                            {/*                No enviado*/}
+                                            {/*            </button>*/}
+                                            {/*            // <span className="reg-send-badge">Deshabilitado por ahora</span>*/}
+                                            {/*        )*/}
+                                            {/*    ):(*/}
+                                            {/*        <span className="reg-send-badge">Deshabilitado por ahora</span>*/}
+                                            {/*    )}*/}
+                                            {/*</td>*/}
                                             <td>
                                                 {b.type_document.abbreviated_description=='DNI'?(
                                                     reg.send_qr ? (
-                                                        <span className="reg-send-badge reg-send-badge--sent"> <IconWhatsApp />Enviado</span>
+                                                        <button
+                                                            className="reg-send-badge reg-send-badge--sent"
+                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}
+                                                            title="Reenviar QR por WhatsApp"
+                                                        >
+                                                            <IconWhatsApp />Enviado
+                                                        </button>
                                                     ) : (
                                                         <button
                                                             className="reg-send-badge reg-send-badge--pending"
-                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone? "51"+b.phone: '' })}
+                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}
                                                             title="Enviar QR por WhatsApp"
                                                         >
                                                             <IconWhatsApp />
                                                             No enviado
                                                         </button>
-                                                        // <span className="reg-send-badge">Deshabilitado por ahora</span>
                                                     )
                                                 ):(
                                                     <span className="reg-send-badge">Deshabilitado por ahora</span>

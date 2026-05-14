@@ -1064,6 +1064,11 @@
     color: #15803d;
 }
 
+.reg-send-badge--sent :hover {
+    background: #22c55e;
+    color: #ffffff;
+}
+
 [data-theme="dark"] .reg-send-badge--sent {
     background: #052e16;
     color: #4ade80;
