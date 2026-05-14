@@ -728,7 +728,7 @@ function WhatsAppModal({ registrationId, name, initialPhone, onClose, onSuccess 
                         <input
                             className="reg-form-input"
                             placeholder="Ej: 51987654321"
-                            value={'51'+phone}
+                            value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             required
                             autoFocus
@@ -988,7 +988,7 @@ export default function RegistrationsPage() {
                                                     ) : (
                                                         <button
                                                             className="reg-send-badge reg-send-badge--pending"
-                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ?? '' })}
+                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: '51'+b.phone ?? '' })}
                                                             title="Enviar QR por WhatsApp"
                                                         >
                                                             <IconWhatsApp />
