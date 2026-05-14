@@ -65,7 +65,7 @@ const MODULES = [
     {
         id: 'qr',
         title: 'Escáner QR',
-        description: 'Escanea los códigos QR de los asistentes para validar su acceso al taller.',
+        description: 'Escanea los códigos QR  o la informacion de los asistentes para validar su acceso al taller.',
         icon: <IconQr />,
         path: '/qr-scanner',
         color: '#43b3c4',
