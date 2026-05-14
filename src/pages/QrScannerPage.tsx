@@ -4,6 +4,7 @@ import QrScanner from '../components/QrScanner';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { registrationService } from '../services/registrationService';
+import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import { attendanceService } from '../services/attendanceService';
 import { eventService } from '../services/eventService';
 import { workshopService } from '../services/workshopService';
@@ -166,7 +167,7 @@ const QrScannerPage: React.FC = () => {
             .finally(() => setWorkshopsLoaded(true));
     }, [selectedEventId]);
 
-    useEffect(() => {
+    const fetchRegistrationsList = useCallback(() => {
         if (!selectedEventId) {
             setRegistrationsList([]);
             return;
@@ -177,6 +178,12 @@ const QrScannerPage: React.FC = () => {
             .catch(() => setRegistrationsList([]))
             .finally(() => setLoadingList(false));
     }, [selectedEventId]);
+
+    useEffect(() => {
+        fetchRegistrationsList();
+    }, [fetchRegistrationsList]);
+
+    useMqttRegistrations(fetchRegistrationsList);
 
     const handleEventChange = (eventId: string) => {
         setSelectedEventId(eventId);
@@ -490,7 +497,7 @@ const QrScannerPage: React.FC = () => {
                                 <SearchableSelect
                                     options={registrationListOptions}
                                     value={selectedListId}
-                                    onChange={id => { setSelectedListId(id); if (id) handleScan(id, 'list'); }}
+                                    onChange={id => { setSelectedListId(id); if (id) void handleScan(id, 'list'); }}
                                     placeholder="Buscar por nombre o documento..."
                                     searchPlaceholder="Nombre o documento..."
                                     loading={loadingList}
