@@ -728,7 +728,7 @@ function WhatsAppModal({ registrationId, name, initialPhone, onClose, onSuccess 
                         <input
                             className="reg-form-input"
                             placeholder="Ej: 51987654321"
-                            value={phone}
+                            value={'51'+phone}
                             onChange={(e) => setPhone(e.target.value)}
                             required
                             autoFocus
@@ -897,6 +897,7 @@ export default function RegistrationsPage() {
                                 <th>Estado</th>
                                 <th>Registrado por</th>
                                 <th>Fecha</th>
+                                <th>Teléfono</th>
                                 <th>QR WhatsApp</th>
                                 <th>Certificado</th>
                                 <th>QR</th>
@@ -974,17 +975,28 @@ export default function RegistrationsPage() {
                                                 <span className="reg-date">{formatDate(reg.created_at)}</span>
                                             </td>
                                             <td>
-                                                {reg.send_qr ? (
-                                                    <span className="reg-send-badge reg-send-badge--sent"> <IconWhatsApp />Enviado</span>
-                                                ) : (
-                                                    // <button
-                                                    //     className="reg-send-badge reg-send-badge--pending"
-                                                    //     onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ?? '' })}
-                                                    //     title="Enviar QR por WhatsApp"
-                                                    // >
-                                                    //     <IconWhatsApp />
-                                                    //     No enviado
-                                                    // </button>
+                                                <span>
+                                                    <b>
+                                                        {b.phone}
+                                                    </b>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {b.type_document.abbreviated_description=='DNI'?(
+                                                    reg.send_qr ? (
+                                                        <span className="reg-send-badge reg-send-badge--sent"> <IconWhatsApp />Enviado</span>
+                                                    ) : (
+                                                        <button
+                                                            className="reg-send-badge reg-send-badge--pending"
+                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ?? '' })}
+                                                            title="Enviar QR por WhatsApp"
+                                                        >
+                                                            <IconWhatsApp />
+                                                            No enviado
+                                                        </button>
+                                                        // <span className="reg-send-badge">Deshabilitado por ahora</span>
+                                                    )
+                                                ):(
                                                     <span className="reg-send-badge">Deshabilitado por ahora</span>
                                                 )}
                                             </td>

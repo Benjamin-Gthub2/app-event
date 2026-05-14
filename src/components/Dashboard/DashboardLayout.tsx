@@ -192,11 +192,11 @@ export default function DashboardLayout({ children, title = 'Inicio', fullBleed 
                     </ul>
                 </nav>
 
-                <div className="dbl-help">
-                    <p className="dbl-help-title">¿Necesitas ayuda?</p>
-                    <p className="dbl-help-desc">Consulta nuestra documentación</p>
-                    <button className="dbl-help-btn">DOCUMENTACIÓN</button>
-                </div>
+                {/*<div className="dbl-help">*/}
+                {/*    <p className="dbl-help-title">¿Necesitas ayuda?</p>*/}
+                {/*    <p className="dbl-help-desc">Consulta nuestra documentación</p>*/}
+                {/*    <button className="dbl-help-btn">DOCUMENTACIÓN</button>*/}
+                {/*</div>*/}
             </aside>
 
             {/* ── Main ── */}
