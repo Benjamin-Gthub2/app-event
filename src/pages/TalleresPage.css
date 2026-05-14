@@ -344,6 +344,30 @@
 }
 .tal-filter-btn--clear:hover { background: var(--tal-icon-btn-hover); }
 
+.tal-filter-group--search { flex: 1; min-width: 180px; }
+
+.tal-filter-search-input {
+    height: 36px;
+    width: 100%;
+    padding: 0 12px;
+    border: 1px solid var(--tal-header-border);
+    border-radius: 8px;
+    background: var(--tal-bg);
+    color: var(--tal-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.25s, color 0.25s;
+    box-sizing: border-box;
+}
+
+.tal-filter-search-input::placeholder { color: var(--tal-text-secondary); opacity: 0.7; }
+
+.tal-filter-search-input:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 2px rgba(6,182,212,0.15);
+}
+
 /* ── Grid content ────────────────────────────────────────────────────────────── */
 .tal-content {
     flex: 1;

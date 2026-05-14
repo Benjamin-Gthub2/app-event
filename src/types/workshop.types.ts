@@ -46,6 +46,7 @@ export interface WorkshopResponse {
 export interface WorkshopSums {
     id: string | null;
     name: string | null;
+    code: string | null;
     start_date: string | null;
     end_date: string | null;
     place: string | null;

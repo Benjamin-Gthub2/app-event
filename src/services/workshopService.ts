@@ -49,11 +49,12 @@ export const workshopService = {
         return res.data;
     },
 
-    getWorkshopSummary(params: { workshop_id?: string; start_date?: string; end_date?: string } = {}): Promise<WorkshopSummaryResponse> {
+    getWorkshopSummary(params: { workshop_id?: string; start_date?: string; end_date?: string; searchvalue?: string } = {}): Promise<WorkshopSummaryResponse> {
         const query = new URLSearchParams();
-        if (params.workshop_id) query.set('workshop_id', params.workshop_id);
-        if (params.start_date)  query.set('start_date',  params.start_date);
-        if (params.end_date)    query.set('end_date',    params.end_date);
+        if (params.workshop_id)  query.set('workshop_id',  params.workshop_id);
+        if (params.start_date)   query.set('start_date',   params.start_date);
+        if (params.end_date)     query.set('end_date',     params.end_date);
+        if (params.searchvalue)  query.set('searchvalue',  params.searchvalue);
         const qs = query.toString();
         return apiClient.get<WorkshopSummaryResponse>(`/event/workshops/summary${qs ? `?${qs}` : ''}`);
     },

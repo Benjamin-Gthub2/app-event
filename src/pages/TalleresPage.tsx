@@ -117,9 +117,10 @@ export default function TalleresPage() {
     const [filterDay, setFilterDay] = useState('');
     const [filterStartTime, setFilterStartTime] = useState('');
     const [filterEndTime, setFilterEndTime] = useState('');
+    const [filterSearch, setFilterSearch] = useState('');
 
     // active filters (applied on "Aplicar")
-    const [activeFilters, setActiveFilters] = useState<{ start_date?: string; end_date?: string }>({});
+    const [activeFilters, setActiveFilters] = useState<{ start_date?: string; end_date?: string; searchvalue?: string }>({});
 
     // load all days once on mount (unfiltered)
     useEffect(() => {
@@ -180,20 +181,35 @@ export default function TalleresPage() {
     };
 
     const applyFilters = () => {
-        if (!filterDay) { setActiveFilters({}); return; }
-        const start = filterStartTime ? `${filterDay}T${filterStartTime}:00` : filterDay;
-        const end   = filterEndTime   ? `${filterDay}T${filterEndTime}:00`   : filterDay;
-        setActiveFilters({ start_date: start, end_date: end });
+        const filters: { start_date?: string; end_date?: string; searchvalue?: string } = {};
+        if (filterDay) {
+            filters.start_date = filterStartTime ? `${filterDay}T${filterStartTime}:00` : filterDay;
+            filters.end_date   = filterEndTime   ? `${filterDay}T${filterEndTime}:00`   : filterDay;
+        }
+        if (filterSearch.trim()) filters.searchvalue = filterSearch.trim();
+        setActiveFilters(filters);
     };
 
     const clearFilters = () => {
         setFilterDay('');
         setFilterStartTime('');
         setFilterEndTime('');
+        setFilterSearch('');
         setActiveFilters({});
     };
 
     const hasActiveFilters = Object.keys(activeFilters).length > 0;
+
+    const displayedWorkshops = filterSearch.trim()
+        ? workshops.filter(w => {
+            const q = filterSearch.toLowerCase();
+            return (
+                (w.name  ?? '').toLowerCase().includes(q) ||
+                (w.code  ?? '').toLowerCase().includes(q) ||
+                (w.place ?? '').toLowerCase().includes(q)
+            );
+        })
+        : workshops;
 
     const stats = computeStats(workshops);
 
@@ -307,12 +323,25 @@ export default function TalleresPage() {
                         </select>
                     </div>
 
+                    {/* Búsqueda por nombre / código / lugar */}
+                    <div className="tal-filter-group tal-filter-group--search">
+                        <span className="tal-filter-group-label">Buscar</span>
+                        <input
+                            className="tal-filter-search-input"
+                            type="text"
+                            placeholder="Nombre, código o lugar..."
+                            value={filterSearch}
+                            onChange={e => setFilterSearch(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && applyFilters()}
+                        />
+                    </div>
+
                     {/* Actions */}
                     <div className="tal-filter-actions">
                         <button className="tal-filter-btn tal-filter-btn--apply" onClick={applyFilters}>
                             Aplicar
                         </button>
-                        {hasActiveFilters && (
+                        {(hasActiveFilters || filterSearch.trim()) && (
                             <button className="tal-filter-btn tal-filter-btn--clear" onClick={clearFilters}>
                                 × Limpiar
                             </button>
@@ -327,11 +356,13 @@ export default function TalleresPage() {
                     <div className="tal-state-msg">Cargando talleres…</div>
                 ) : error ? (
                     <div className="tal-state-msg tal-state-msg--error">{error}</div>
-                ) : workshops.length === 0 ? (
-                    <div className="tal-state-msg">No hay talleres para el filtro seleccionado.</div>
+                ) : displayedWorkshops.length === 0 ? (
+                    <div className="tal-state-msg">
+                        {filterSearch.trim() ? `Sin resultados para "${filterSearch}".` : 'No hay talleres para el filtro seleccionado.'}
+                    </div>
                 ) : (
                     <div className="tal-grid">
-                        {workshops.map((w, i) => {
+                        {displayedWorkshops.map((w, i) => {
                             const capacity  = w.capacity ?? 0;
                             const inscritos = w.total_presences ?? 0;
                             const status    = getAvailStatus(capacity, inscritos);
