@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
 import { attendanceService } from '../services/attendanceService';
 import { eventService } from '../services/eventService';
@@ -237,6 +237,24 @@ export default function AccessControlPage() {
         }
     };
 
+    // Auto-fetch when any SearchableSelect changes (debounced to absorb the workshopId reset on event change)
+    const isFirstRender = useRef(true);
+    const fetchDataRef = useRef(fetchData);
+    fetchDataRef.current = fetchData;
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const timer = setTimeout(() => {
+            setPage(1);
+            fetchDataRef.current(1, pageSize);
+        }, 150);
+        return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [eventId, workshopId, beneficiaryId]);
+
     const { connected: mqttConnected } = useMqttAttendances(() => {
         if (queried) fetchData(page, pageSize);
     });
@@ -456,7 +474,7 @@ export default function AccessControlPage() {
                                     <td colSpan={7}>
                                         <div className="ac-state-icon"><IconEmptyUsers /></div>
                                         <p className="ac-state-title">Aplica un filtro para consultar</p>
-                                        <p className="ac-state-desc">Selecciona un evento, taller o beneficiario y presiona "Consultar".</p>
+                                        <p className="ac-state-desc">Selecciona un evento, taller o beneficiario para iniciar la búsqueda.</p>
                                     </td>
                                 </tr>
                             ) : rows.length === 0 ? (
