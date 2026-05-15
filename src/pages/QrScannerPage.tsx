@@ -194,7 +194,7 @@ const QrScannerPage: React.FC = () => {
 
     useEffect(() => {
         if (!selectedEventId) return;
-        workshopService.getWorkshops({ event_id: selectedEventId, size_page: 100 })
+        workshopService.getWorkshops({ event_id: selectedEventId, size_page: 100, only_today: true })
             .then(res => setWorkshops(res.data ?? []))
             .catch(() => setWorkshops([]))
             .finally(() => setWorkshopsLoaded(true));

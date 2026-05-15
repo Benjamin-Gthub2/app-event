@@ -6,6 +6,8 @@ export interface GetWorkshopsParams {
     size_page?: number;
     event_id?: string;
     type_id?: string;
+    start_date?: string;
+    only_today?: boolean;
     searchvalue?: string;
 }
 
@@ -39,6 +41,8 @@ export const workshopService = {
         if (params.size_page !== undefined) query.set('size_page', String(params.size_page));
         if (params.event_id) query.set('event_id', params.event_id);
         if (params.type_id) query.set('type_id', params.type_id);
+        if (params.start_date) query.set('start_date', params.start_date);
+        if (params.only_today) query.set('only_today', 'true');
         if (params.searchvalue) query.set('searchvalue', params.searchvalue);
         const qs = query.toString();
         return apiClient.get<WorkshopsResponse>(`/event/workshops${qs ? `?${qs}` : ''}`);
