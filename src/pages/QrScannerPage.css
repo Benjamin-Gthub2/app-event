@@ -569,6 +569,11 @@
     box-shadow: 0 0 80px rgba(239, 68, 68, 0.25), 0 24px 60px rgba(0, 0, 0, 0.6);
 }
 
+.qr-modal-card--warning {
+    border-color: rgba(245, 158, 11, 0.35);
+    box-shadow: 0 0 80px rgba(245, 158, 11, 0.25), 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
 .qr-modal-icon {
     width: 88px;
     height: 88px;
@@ -590,6 +595,11 @@
 .qr-modal-icon--error {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     box-shadow: 0 0 48px rgba(239, 68, 68, 0.55);
+}
+
+.qr-modal-icon--warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 0 48px rgba(245, 158, 11, 0.55);
 }
 
 .qr-modal-title {
