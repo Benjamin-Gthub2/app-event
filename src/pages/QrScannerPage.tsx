@@ -6,6 +6,7 @@ import { SearchableSelect } from '../components/SearchableSelect';
 import { registrationService } from '../services/registrationService';
 import { useMqttRegistrations } from '../hooks/useMqttRegistrations';
 import { attendanceService } from '../services/attendanceService';
+import { ApiError } from '../services/apiClient';
 import { eventService } from '../services/eventService';
 import { workshopService } from '../services/workshopService';
 import type { Registration, RegistrationByEvent } from '../types/registration.types';
@@ -58,25 +59,34 @@ type AttendanceState =
 // ── AttendanceModal ────────────────────────────────────────────────────────────
 
 interface AttendanceModalProps {
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'warning';
+    title?: string;
     message: string;
     onClose: () => void;
 }
 
-const AttendanceModal: React.FC<AttendanceModalProps> = ({ type, message, onClose }) => {
+const MODAL_DEFAULTS: Record<AttendanceModalProps['type'], { title: string; icon: string }> = {
+    success: { title: 'Asistencia guardada', icon: '✓' },
+    error:   { title: 'Error al guardar',    icon: '✕' },
+    warning: { title: 'Atención',            icon: '⚠' },
+};
+
+const AttendanceModal: React.FC<AttendanceModalProps> = ({ type, title, message, onClose }) => {
     useEffect(() => {
-        const t = setTimeout(onClose, 5000);
+        const t = setTimeout(onClose, 6000);
         return () => clearTimeout(t);
     }, [onClose]);
+
+    const defaults = MODAL_DEFAULTS[type];
 
     return createPortal(
         <div className="qr-modal-overlay" onClick={onClose}>
             <div className={`qr-modal-card qr-modal-card--${type}`} onClick={e => e.stopPropagation()}>
                 <div className={`qr-modal-icon qr-modal-icon--${type}`}>
-                    {type === 'success' ? '✓' : '✕'}
+                    {defaults.icon}
                 </div>
                 <h2 className="qr-modal-title">
-                    {type === 'success' ? 'Asistencia guardada' : 'Error al guardar'}
+                    {title ?? defaults.title}
                 </h2>
                 <p className="qr-modal-message">{message}</p>
                 <p className="qr-modal-hint">Toca en cualquier lugar para cerrar</p>
@@ -95,7 +105,7 @@ interface AttendanceButtonProps {
 
 const AttendanceButton: React.FC<AttendanceButtonProps> = ({ workshopId, beneficiaryId }) => {
     const [state, setState] = useState<AttendanceState>({ status: 'idle' });
-    const [modal, setModal] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [modal, setModal] = useState<{ type: 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null);
 
     const closeModal = useCallback(() => setModal(null), []);
 
@@ -106,6 +116,20 @@ const AttendanceButton: React.FC<AttendanceButtonProps> = ({ workshopId, benefic
             setState({ status: 'saved' });
             setModal({ type: 'success', message: 'La asistencia del participante fue registrada correctamente.' });
         } catch (e) {
+            if (e instanceof ApiError) {
+                if (e.code === 'ERR_ATTENDANCE_ALREADY_EXISTS') {
+                    const msg = 'El beneficiario ya tiene asistencia registrada en este taller.';
+                    setState({ status: 'error', message: msg });
+                    setModal({ type: 'warning', title: 'Ya registrado', message: msg });
+                    return;
+                }
+                if (e.code === 'ERR_ATTENDANCE_SCHEDULE_CONFLICT') {
+                    const msg = 'El beneficiario ya está inscrito en otro taller que inicia a la misma hora.';
+                    setState({ status: 'error', message: msg });
+                    setModal({ type: 'warning', title: 'Conflicto de horario', message: msg });
+                    return;
+                }
+            }
             const msg = e instanceof Error ? e.message : 'Error al guardar asistencia';
             setState({ status: 'error', message: msg });
             setModal({ type: 'error', message: msg });
@@ -114,7 +138,7 @@ const AttendanceButton: React.FC<AttendanceButtonProps> = ({ workshopId, benefic
 
     return (
         <>
-            {modal && <AttendanceModal type={modal.type} message={modal.message} onClose={closeModal} />}
+            {modal && <AttendanceModal type={modal.type} title={modal.title} message={modal.message} onClose={closeModal} />}
             <div className="qr-attendance-wrap">
                 {state.status === 'saved' ? (
                     <div className="qr-attendance-saved">✓ Asistencia guardada correctamente</div>
@@ -170,7 +194,7 @@ const QrScannerPage: React.FC = () => {
 
     useEffect(() => {
         if (!selectedEventId) return;
-        workshopService.getWorkshops({ event_id: selectedEventId, size_page: 100 })
+        workshopService.getWorkshops({ event_id: selectedEventId, size_page: 100, only_today: true })
             .then(res => setWorkshops(res.data ?? []))
             .catch(() => setWorkshops([]))
             .finally(() => setWorkshopsLoaded(true));

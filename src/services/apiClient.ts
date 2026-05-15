@@ -1,6 +1,18 @@
 export const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api/v1`;
 const TENANT_KEY = 'x_tenant_id';
 
+export class ApiError extends Error {
+    code: string;
+    httpStatus: number;
+
+    constructor(code: string, description: string, httpStatus: number) {
+        super(description);
+        this.name = 'ApiError';
+        this.code = code;
+        this.httpStatus = httpStatus;
+    }
+}
+
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 async function request<T>(
@@ -46,7 +58,10 @@ async function request<T>(
     const data: T = await response.json();
 
     if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        const body = data as { code?: string; description?: string };
+        const code = body?.code ?? `ERR_${response.status}`;
+        const description = body?.description ?? response.statusText;
+        throw new ApiError(code, description, response.status);
     }
 
     return data;
