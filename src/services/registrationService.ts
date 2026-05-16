@@ -73,4 +73,29 @@ export const registrationService = {
         const blob = await response.blob();
         return URL.createObjectURL(blob);
     },
+
+    async downloadCertificatePdf(id: string): Promise<void> {
+        const token = localStorage.getItem('auth_token');
+        const tenantId = localStorage.getItem('x_tenant_id');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+        const response = await fetch(`${API_BASE}/event/registrations/${id}/certificate`, { headers });
+        if (!response.ok) throw new Error(`Error ${response.status}`);
+
+        const disposition = response.headers.get('Content-Disposition') ?? '';
+        const match = disposition.match(/filename="([^"]+)"/);
+        const fileName = match?.[1] ?? `${id}_certificado.pdf`;
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
 };

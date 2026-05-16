@@ -101,6 +101,13 @@ const IconPlus = () => (
     </svg>
 );
 
+const IconCertificate = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="7" />
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+    </svg>
+);
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fullName(names: string, surname: string, lastName: string | null) {
@@ -765,6 +772,7 @@ export default function RegistrationsPage() {
     const [whatsappModal, setWhatsappModal] = useState<{ id: string; name: string; phone: string } | null>(null);
     const [addModal, setAddModal] = useState(false);
     const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
+    const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
 
     useEffect(() => {
         registrationStatusService
@@ -815,6 +823,18 @@ export default function RegistrationsPage() {
         ));
     };
 
+    const handleDownloadCertificate = async (reg: Registration) => {
+        if (downloadingCertId !== null) return;
+        setDownloadingCertId(reg.id);
+        try {
+            await registrationService.downloadCertificatePdf(reg.id);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Error al generar el certificado.');
+        } finally {
+            setDownloadingCertId(null);
+        }
+    };
+
     const totalPages = Math.max(pagination?.last_page ?? 1, 1);
 
     const handlePage = (p: number) => {
@@ -831,7 +851,7 @@ export default function RegistrationsPage() {
         return pages;
     };
 
-    const COLS = 10;
+    const COLS = 11;
 
     return (
         <DashboardLayout title="Inscripciones">
@@ -1025,11 +1045,17 @@ export default function RegistrationsPage() {
                                                 )}
                                             </td>
                                             <td>
-                                                {reg.send_certificate ? (
-                                                    <span className="reg-send-badge reg-send-badge--sent">Enviado</span>
-                                                ) : (
-                                                    <span className="reg-send-badge reg-send-badge--no">No enviado</span>
-                                                )}
+                                                <button
+                                                    className={`reg-cert-btn${downloadingCertId === reg.id ? ' reg-cert-btn--loading' : ''}`}
+                                                    onClick={() => handleDownloadCertificate(reg)}
+                                                    disabled={downloadingCertId !== null}
+                                                    title={`Descargar certificado de ${name}`}
+                                                >
+                                                    {downloadingCertId === reg.id
+                                                        ? <span className="reg-cert-spinner" />
+                                                        : <IconCertificate />}
+                                                    {downloadingCertId === reg.id ? 'Generando...' : 'Descargar'}
+                                                </button>
                                             </td>
                                             <td>
                                                 <button
