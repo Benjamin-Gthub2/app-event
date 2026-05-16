@@ -83,6 +83,15 @@ const IconEmptyUsers = () => (
     </svg>
 );
 
+const IconTrash = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+        <path d="M10 11v6" /><path d="M14 11v6" />
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+);
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -138,6 +147,8 @@ export default function AccessControlPage() {
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [confirmId, setConfirmId] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // Load events on mount
     useEffect(() => {
@@ -208,6 +219,21 @@ export default function AccessControlPage() {
         if (p < 1 || p > totalPages || p === page) return;
         setPage(p);
         fetchData(p, pageSize);
+    };
+
+    const handleDeleteAttendance = async (id: string) => {
+        setDeletingId(id);
+        setError(null);
+        try {
+            await attendanceService.deleteAttendance(id);
+            setConfirmId(null);
+            fetchData(page, pageSize);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Error al eliminar la asistencia.');
+            setConfirmId(null);
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     const handleDownloadXlsx = async () => {
@@ -456,13 +482,14 @@ export default function AccessControlPage() {
                                 <th>Evento</th>
                                 <th>Fecha Asistencia</th>
                                 <th>Registrado por</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i}>
-                                        {Array.from({ length: 7 }).map((_, j) => (
+                                        {Array.from({ length: 8 }).map((_, j) => (
                                             <td key={j}>
                                                 <span className="ac-skeleton" style={{ width: `${50 + (j * 17) % 80}px` }} />
                                             </td>
@@ -471,7 +498,7 @@ export default function AccessControlPage() {
                                 ))
                             ) : !queried ? (
                                 <tr className="ac-state-row">
-                                    <td colSpan={7}>
+                                    <td colSpan={8}>
                                         <div className="ac-state-icon"><IconEmptyUsers /></div>
                                         <p className="ac-state-title">Aplica un filtro para consultar</p>
                                         <p className="ac-state-desc">Selecciona un evento, taller o beneficiario para iniciar la búsqueda.</p>
@@ -479,7 +506,7 @@ export default function AccessControlPage() {
                                 </tr>
                             ) : rows.length === 0 ? (
                                 <tr className="ac-state-row">
-                                    <td colSpan={7}>
+                                    <td colSpan={8}>
                                         <div className="ac-state-icon"><IconEmptyUsers /></div>
                                         <p className="ac-state-title">Sin resultados</p>
                                         <p className="ac-state-desc">No se encontraron asistencias para los filtros seleccionados.</p>
@@ -490,6 +517,8 @@ export default function AccessControlPage() {
                                     const b = att.beneficiary;
                                     const w = att.workshop;
                                     const name = fullName(b.names, b.surname, b.last_name);
+                                    const isConfirming = confirmId === att.id;
+                                    const isDeleting = deletingId === att.id;
                                     return (
                                         <tr key={att.id}>
                                             <td>
@@ -517,6 +546,36 @@ export default function AccessControlPage() {
                                             </td>
                                             <td>
                                                 <span className="ac-created-by">@{att.created_by.username}</span>
+                                            </td>
+                                            <td>
+                                                {isConfirming ? (
+                                                    <div className="ac-confirm-wrap">
+                                                        <span className="ac-confirm-label">¿Eliminar?</span>
+                                                        <button
+                                                            className="ac-confirm-yes"
+                                                            onClick={() => handleDeleteAttendance(att.id)}
+                                                            disabled={isDeleting}
+                                                        >
+                                                            {isDeleting ? '...' : 'Sí'}
+                                                        </button>
+                                                        <button
+                                                            className="ac-confirm-no"
+                                                            onClick={() => setConfirmId(null)}
+                                                            disabled={isDeleting}
+                                                        >
+                                                            No
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        className="ac-delete-btn"
+                                                        onClick={() => setConfirmId(att.id)}
+                                                        disabled={!!deletingId}
+                                                        title="Eliminar asistencia"
+                                                    >
+                                                        <IconTrash />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     );
