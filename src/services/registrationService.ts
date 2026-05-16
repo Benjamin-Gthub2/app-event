@@ -74,7 +74,7 @@ export const registrationService = {
         return URL.createObjectURL(blob);
     },
 
-    async downloadCertificatePdf(id: string): Promise<void> {
+    async fetchCertificatePdfBlob(id: string): Promise<{ blobUrl: string; fileName: string }> {
         const token = localStorage.getItem('auth_token');
         const tenantId = localStorage.getItem('x_tenant_id');
         const headers: Record<string, string> = {};
@@ -89,13 +89,17 @@ export const registrationService = {
         const fileName = match?.[1] ?? `${id}_certificado.pdf`;
 
         const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
+        return { blobUrl: URL.createObjectURL(blob), fileName };
+    },
+
+    async downloadCertificatePdf(id: string): Promise<void> {
+        const { blobUrl, fileName } = await registrationService.fetchCertificatePdfBlob(id);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = blobUrl;
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(blobUrl);
     },
 };

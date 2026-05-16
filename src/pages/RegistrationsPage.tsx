@@ -680,6 +680,90 @@ function QrModal({ registrationId, name, onClose }: QrModalProps) {
     );
 }
 
+// ── Certificate Preview Modal ──────────────────────────────────────────────────
+
+interface CertificatePreviewModalProps {
+    registrationId: string;
+    name: string;
+    onClose: () => void;
+}
+
+function CertificatePreviewModal({ registrationId, name, onClose }: CertificatePreviewModalProps) {
+    const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    const [fileName, setFileName] = useState<string>(`${registrationId}_certificado.pdf`);
+    const [error, setError] = useState<string | null>(null);
+    const prevUrl = useRef<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        registrationService.fetchCertificatePdfBlob(registrationId)
+            .then(({ blobUrl: url, fileName: fn }) => {
+                if (!cancelled) {
+                    prevUrl.current = url;
+                    setBlobUrl(url);
+                    setFileName(fn);
+                }
+            })
+            .catch((e) => {
+                if (!cancelled) setError(e instanceof Error ? e.message : 'Error al generar el certificado');
+            });
+        return () => {
+            cancelled = true;
+            if (prevUrl.current) URL.revokeObjectURL(prevUrl.current);
+        };
+    }, [registrationId]);
+
+    return (
+        <div className="reg-modal-overlay" onClick={onClose}>
+            <div className="reg-cert-preview-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="reg-modal-header">
+                    <div>
+                        <h3 className="reg-modal-title">Vista previa del certificado</h3>
+                        <p className="reg-modal-sub">{name}</p>
+                    </div>
+                    <button className="reg-modal-close" onClick={onClose} aria-label="Cerrar">
+                        <IconClose />
+                    </button>
+                </div>
+
+                <div className="reg-cert-preview-body">
+                    {!blobUrl && !error && (
+                        <div className="reg-qr-loading">
+                            <span className="reg-qr-spinner" />
+                            <p>Generando certificado...</p>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="reg-qr-error">
+                            <IconAlert />
+                            <p>{error}</p>
+                        </div>
+                    )}
+                    {blobUrl && (
+                        <iframe
+                            src={blobUrl}
+                            title={`Certificado de ${name}`}
+                            className="reg-cert-preview-iframe"
+                        />
+                    )}
+                </div>
+
+                {blobUrl && (
+                    <div className="reg-modal-footer">
+                        <a
+                            href={blobUrl}
+                            download={fileName}
+                            className="reg-qr-download"
+                        >
+                            Descargar PDF
+                        </a>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ── WhatsApp QR Modal ──────────────────────────────────────────────────────────
 
 interface WhatsAppModalProps {
@@ -772,7 +856,7 @@ export default function RegistrationsPage() {
     const [whatsappModal, setWhatsappModal] = useState<{ id: string; name: string; phone: string } | null>(null);
     const [addModal, setAddModal] = useState(false);
     const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
-    const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
+    const [certPreviewModal, setCertPreviewModal] = useState<{ id: string; name: string } | null>(null);
 
     useEffect(() => {
         registrationStatusService
@@ -823,16 +907,8 @@ export default function RegistrationsPage() {
         ));
     };
 
-    const handleDownloadCertificate = async (reg: Registration) => {
-        if (downloadingCertId !== null) return;
-        setDownloadingCertId(reg.id);
-        try {
-            await registrationService.downloadCertificatePdf(reg.id);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'Error al generar el certificado.');
-        } finally {
-            setDownloadingCertId(null);
-        }
+    const handleDownloadCertificate = (id: string, name: string) => {
+        setCertPreviewModal({ id, name });
     };
 
     const totalPages = Math.max(pagination?.last_page ?? 1, 1);
@@ -1046,15 +1122,13 @@ export default function RegistrationsPage() {
                                             </td>
                                             <td>
                                                 <button
-                                                    className={`reg-cert-btn${downloadingCertId === reg.id ? ' reg-cert-btn--loading' : ''}`}
-                                                    onClick={() => handleDownloadCertificate(reg)}
-                                                    disabled={downloadingCertId !== null}
-                                                    title={`Descargar certificado de ${name}`}
+                                                    className="reg-cert-btn"
+                                                    onClick={() => handleDownloadCertificate(reg.id, name)}
+                                                    disabled={certPreviewModal !== null}
+                                                    title={`Ver certificado de ${name}`}
                                                 >
-                                                    {downloadingCertId === reg.id
-                                                        ? <span className="reg-cert-spinner" />
-                                                        : <IconCertificate />}
-                                                    {downloadingCertId === reg.id ? 'Generando...' : 'Descargar'}
+                                                    <IconCertificate />
+                                                    Ver
                                                 </button>
                                             </td>
                                             <td>
@@ -1113,6 +1187,15 @@ export default function RegistrationsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Certificate Preview Modal */}
+            {certPreviewModal && (
+                <CertificatePreviewModal
+                    registrationId={certPreviewModal.id}
+                    name={certPreviewModal.name}
+                    onClose={() => setCertPreviewModal(null)}
+                />
+            )}
 
             {/* QR Modal */}
             {qrModal && (

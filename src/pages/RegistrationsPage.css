@@ -1175,6 +1175,40 @@
     border-top-color: #fbbf24;
 }
 
+/* ── Certificate Preview Modal ───────────────────────────────────────────────── */
+.reg-cert-preview-modal {
+    background: var(--reg-card-bg);
+    border: 1px solid var(--reg-card-border);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    width: min(92vw, 980px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: reg-modal-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+.reg-cert-preview-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e7eb;
+    min-height: 480px;
+}
+
+[data-theme="dark"] .reg-cert-preview-body {
+    background: #1a1a1a;
+}
+
+.reg-cert-preview-iframe {
+    width: 100%;
+    height: 560px;
+    border: none;
+    display: block;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .reg-header {
