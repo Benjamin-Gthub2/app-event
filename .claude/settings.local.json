@@ -30,7 +30,8 @@
       "Bash(grep *)",
       "Bash(Select-Object Name, FullName)",
       "Bash(ls -la \"C:\\\\\\\\Users\\\\\\\\Benjamin\\\\\\\\dev\\\\\\\\smartone\\\\\\\\otros\\\\\\\\app-event\")",
-      "Bash(powershell -Command \"Set-Location 'C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event'; go build ./... 2>&1\")"
+      "Bash(powershell -Command \"Set-Location 'C:\\\\Users\\\\Benja-PC\\\\dev\\\\api-event'; go build ./... 2>&1\")",
+      "PowerShell(npx tsc --noEmit 2>&1)"
     ]
   }
 }
