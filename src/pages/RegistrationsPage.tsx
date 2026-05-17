@@ -691,28 +691,34 @@ interface CertificatePreviewModalProps {
     onClose: () => void;
 }
 
+function buildCertFileName(name: string): string {
+    return name
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toUpperCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^A-Z0-9_]/g, '') + '_certificado.pdf';
+}
+
 function CertificatePreviewModal({ registrationId, name, cache, onClose }: CertificatePreviewModalProps) {
+    const fileName = buildCertFileName(name);
     const hit = cache.current.get(registrationId);
     const [blobUrl, setBlobUrl] = useState<string | null>(hit?.blobUrl ?? null);
-    const [fileName, setFileName] = useState<string>(hit?.fileName ?? `${registrationId}_certificado.pdf`);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (blobUrl) return; // already in cache — skip fetch
+        if (blobUrl) return;
         let cancelled = false;
         registrationService.fetchCertificatePdfBlob(registrationId)
-            .then(({ blobUrl: url, fileName: fn }) => {
+            .then(({ blobUrl: url }) => {
                 if (!cancelled) {
-                    cache.current.set(registrationId, { blobUrl: url, fileName: fn });
+                    cache.current.set(registrationId, { blobUrl: url, fileName });
                     setBlobUrl(url);
-                    setFileName(fn);
                 }
             })
             .catch((e) => {
                 if (!cancelled) setError(e instanceof Error ? e.message : 'Error al generar el certificado');
             });
         return () => { cancelled = true; };
-        // Blob URL lifetime is owned by the page-level cache — no revoke on unmount.
     }, [registrationId]);
 
     return (
