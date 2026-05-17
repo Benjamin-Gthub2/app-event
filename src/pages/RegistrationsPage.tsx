@@ -942,7 +942,7 @@ export default function RegistrationsPage() {
         return pages;
     };
 
-    const COLS = 11;
+    const COLS = 12;
 
     return (
         <DashboardLayout title="Inscripciones">
@@ -1009,7 +1009,8 @@ export default function RegistrationsPage() {
                                 <th>Registrado por</th>
                                 <th>Fecha</th>
                                 <th>Teléfono</th>
-                                <th>QR WhatsApp</th>
+                                {/*<th>QR WhatsApp</th>*/}
+                                <th>Talleres</th>
                                 <th>Certificado</th>
                                 <th>QR</th>
                             </tr>
@@ -1111,40 +1112,52 @@ export default function RegistrationsPage() {
                                             {/*        <span className="reg-send-badge">Deshabilitado por ahora</span>*/}
                                             {/*    )}*/}
                                             {/*</td>*/}
-                                            <td>
-                                                {b.type_document.abbreviated_description=='DNI'?(
-                                                    reg.send_qr ? (
-                                                        <button
-                                                            className="reg-send-badge reg-send-badge--sent"
-                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}
-                                                            title="Reenviar QR por WhatsApp"
-                                                        >
-                                                            <IconWhatsApp />Enviado
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            className="reg-send-badge reg-send-badge--pending"
-                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}
-                                                            title="Enviar QR por WhatsApp"
-                                                        >
-                                                            <IconWhatsApp />
-                                                            No enviado
-                                                        </button>
-                                                    )
-                                                ):(
-                                                    <span className="reg-send-badge">Deshabilitado por ahora</span>
-                                                )}
+
+                                            {/*<td>*/}
+                                            {/*    {b.type_document.abbreviated_description=='DNI'?(*/}
+                                            {/*        reg.send_qr ? (*/}
+                                            {/*            <button*/}
+                                            {/*                className="reg-send-badge reg-send-badge--sent"*/}
+                                            {/*                onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}*/}
+                                            {/*                title="Reenviar QR por WhatsApp"*/}
+                                            {/*            >*/}
+                                            {/*                <IconWhatsApp />Enviado*/}
+                                            {/*            </button>*/}
+                                            {/*        ) : (*/}
+                                            {/*            <button*/}
+                                            {/*                className="reg-send-badge reg-send-badge--pending"*/}
+                                            {/*                onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}*/}
+                                            {/*                title="Enviar QR por WhatsApp"*/}
+                                            {/*            >*/}
+                                            {/*                <IconWhatsApp />*/}
+                                            {/*                No enviado*/}
+                                            {/*            </button>*/}
+                                            {/*        )*/}
+                                            {/*    ):(*/}
+                                            {/*        <span className="reg-send-badge">Deshabilitado por ahora</span>*/}
+                                            {/*    )}*/}
+                                            {/*</td>*/}
+                                            <td style={{ textAlign: 'center' }}>
+                                                <span className={`reg-workshops-badge reg-workshops-badge--${reg.workshops_attended >= 4 ? 'complete' : 'incomplete'}`}>
+                                                    {reg.workshops_attended}/4
+                                                </span>
                                             </td>
                                             <td>
-                                                <button
-                                                    className="reg-cert-btn"
-                                                    onClick={() => handleDownloadCertificate(reg.id, name)}
-                                                    disabled={certPreviewModal !== null}
-                                                    title={`Ver certificado de ${name}`}
-                                                >
-                                                    <IconCertificate />
-                                                    Ver
-                                                </button>
+                                                {reg.workshops_attended >= 4 ? (
+                                                    <button
+                                                        className="reg-cert-btn"
+                                                        onClick={() => handleDownloadCertificate(reg.id, name)}
+                                                        disabled={certPreviewModal !== null}
+                                                        title={`Ver certificado de ${name}`}
+                                                    >
+                                                        <IconCertificate />
+                                                        Ver
+                                                    </button>
+                                                ) : (
+                                                    <span className="reg-cert-locked" title={`Asistió a ${reg.workshops_attended} de 4 talleres requeridos`}>
+                                                        —
+                                                    </span>
+                                                )}
                                             </td>
                                             <td>
                                                 <button

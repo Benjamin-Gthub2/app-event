@@ -63,6 +63,7 @@ export interface Registration {
     id: string;
     send_qr: boolean;
     send_certificate: boolean;
+    workshops_attended: number;
     created_at: string | null;
     status: Status;
     event: RegistrationEvent;
