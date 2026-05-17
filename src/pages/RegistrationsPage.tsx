@@ -682,24 +682,28 @@ function QrModal({ registrationId, name, onClose }: QrModalProps) {
 
 // ── Certificate Preview Modal ──────────────────────────────────────────────────
 
+type CertCache = Map<string, { blobUrl: string; fileName: string }>;
+
 interface CertificatePreviewModalProps {
     registrationId: string;
     name: string;
+    cache: React.MutableRefObject<CertCache>;
     onClose: () => void;
 }
 
-function CertificatePreviewModal({ registrationId, name, onClose }: CertificatePreviewModalProps) {
-    const [blobUrl, setBlobUrl] = useState<string | null>(null);
-    const [fileName, setFileName] = useState<string>(`${registrationId}_certificado.pdf`);
+function CertificatePreviewModal({ registrationId, name, cache, onClose }: CertificatePreviewModalProps) {
+    const hit = cache.current.get(registrationId);
+    const [blobUrl, setBlobUrl] = useState<string | null>(hit?.blobUrl ?? null);
+    const [fileName, setFileName] = useState<string>(hit?.fileName ?? `${registrationId}_certificado.pdf`);
     const [error, setError] = useState<string | null>(null);
-    const prevUrl = useRef<string | null>(null);
 
     useEffect(() => {
+        if (blobUrl) return; // already in cache — skip fetch
         let cancelled = false;
         registrationService.fetchCertificatePdfBlob(registrationId)
             .then(({ blobUrl: url, fileName: fn }) => {
                 if (!cancelled) {
-                    prevUrl.current = url;
+                    cache.current.set(registrationId, { blobUrl: url, fileName: fn });
                     setBlobUrl(url);
                     setFileName(fn);
                 }
@@ -707,10 +711,8 @@ function CertificatePreviewModal({ registrationId, name, onClose }: CertificateP
             .catch((e) => {
                 if (!cancelled) setError(e instanceof Error ? e.message : 'Error al generar el certificado');
             });
-        return () => {
-            cancelled = true;
-            if (prevUrl.current) URL.revokeObjectURL(prevUrl.current);
-        };
+        return () => { cancelled = true; };
+        // Blob URL lifetime is owned by the page-level cache — no revoke on unmount.
     }, [registrationId]);
 
     return (
@@ -730,7 +732,7 @@ function CertificatePreviewModal({ registrationId, name, onClose }: CertificateP
                     {!blobUrl && !error && (
                         <div className="reg-qr-loading">
                             <span className="reg-qr-spinner" />
-                            <p>Generando certificado...</p>
+                            <p>Cargando certificado...</p>
                         </div>
                     )}
                     {error && (
@@ -857,6 +859,13 @@ export default function RegistrationsPage() {
     const [addModal, setAddModal] = useState(false);
     const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
     const [certPreviewModal, setCertPreviewModal] = useState<{ id: string; name: string } | null>(null);
+    const certCacheRef = useRef<CertCache>(new Map());
+
+    // Revoke all cached blob URLs when the page unmounts.
+    useEffect(() => {
+        const cache = certCacheRef.current;
+        return () => { cache.forEach(({ blobUrl }) => URL.revokeObjectURL(blobUrl)); };
+    }, []);
 
     useEffect(() => {
         registrationStatusService
@@ -1193,6 +1202,7 @@ export default function RegistrationsPage() {
                 <CertificatePreviewModal
                     registrationId={certPreviewModal.id}
                     name={certPreviewModal.name}
+                    cache={certCacheRef}
                     onClose={() => setCertPreviewModal(null)}
                 />
             )}
