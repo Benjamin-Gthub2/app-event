@@ -865,6 +865,7 @@ export default function RegistrationsPage() {
     const [addModal, setAddModal] = useState(false);
     const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
     const [certPreviewModal, setCertPreviewModal] = useState<{ id: string; name: string } | null>(null);
+    const [filterCertEligible, setFilterCertEligible] = useState(false);
     const certCacheRef = useRef<CertCache>(new Map());
 
     // Revoke all cached blob URLs when the page unmounts.
@@ -885,6 +886,8 @@ export default function RegistrationsPage() {
         return () => clearTimeout(t);
     }, [search]);
 
+    useEffect(() => { setPage(1); }, [filterCertEligible]);
+
     const fetchData = useCallback(async (targetPage: number) => {
         setLoading(true);
         setError(null);
@@ -893,6 +896,7 @@ export default function RegistrationsPage() {
                 page: targetPage,
                 size_page: pageSize,
                 searchvalue: activeSearch.trim() || undefined,
+                min_workshops: filterCertEligible ? 4 : undefined,
             });
             setRows(res.data ?? []);
             setPagination(res.pagination ?? null);
@@ -901,7 +905,7 @@ export default function RegistrationsPage() {
         } finally {
             setLoading(false);
         }
-    }, [pageSize, activeSearch]);
+    }, [pageSize, activeSearch, filterCertEligible]);
 
     const { connected: mqttConnected } = useMqttRegistrations(() => fetchData(page));
 
@@ -967,6 +971,14 @@ export default function RegistrationsPage() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+                    <label className="reg-filter-toggle" title="Mostrar solo inscritos con 4 o más talleres asistidos">
+                        <input
+                            type="checkbox"
+                            checked={filterCertEligible}
+                            onChange={(e) => setFilterCertEligible(e.target.checked)}
+                        />
+                        <span>4+ talleres</span>
+                    </label>
                     <button className="reg-add-btn" onClick={() => setAddModal(true)}>
                         <IconPlus />
                         Agregar

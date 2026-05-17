@@ -121,6 +121,42 @@
 }
 
 /* ── Add button ──────────────────────────────────────────────────────────────── */
+.reg-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid var(--reg-divider);
+    border-radius: 8px;
+    background: var(--reg-card-bg);
+    color: var(--reg-text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.reg-filter-toggle input[type="checkbox"] {
+    accent-color: #0284c7;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.reg-filter-toggle:has(input:checked) {
+    border-color: #0284c7;
+    color: #0284c7;
+    background: #eff6ff;
+}
+
+[data-theme="dark"] .reg-filter-toggle:has(input:checked) {
+    border-color: #1d4ed8;
+    color: #60a5fa;
+    background: #0c1a2e;
+}
+
 .reg-add-btn {
     display: flex;
     align-items: center;

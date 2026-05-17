@@ -8,6 +8,7 @@ export interface GetRegistrationsParams {
     end_date?: string;
     created_by?: string;
     searchvalue?: string;
+    min_workshops?: number;
 }
 
 export interface CreateRegistrationBody {
@@ -34,6 +35,7 @@ export const registrationService = {
         if (params.end_date) query.set('end_date', params.end_date);
         if (params.created_by) query.set('created_by', params.created_by);
         if (params.searchvalue) query.set('searchvalue', params.searchvalue);
+        if (params.min_workshops !== undefined) query.set('min_workshops', String(params.min_workshops));
 
         const qs = query.toString();
         return apiClient.get<RegistrationsResponse>(`/event/registrations${qs ? `?${qs}` : ''}`);
