@@ -101,6 +101,13 @@ const IconPlus = () => (
     </svg>
 );
 
+const IconCertificate = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="7" />
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+    </svg>
+);
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fullName(names: string, surname: string, lastName: string | null) {
@@ -673,6 +680,98 @@ function QrModal({ registrationId, name, onClose }: QrModalProps) {
     );
 }
 
+// ── Certificate Preview Modal ──────────────────────────────────────────────────
+
+type CertCache = Map<string, { blobUrl: string; fileName: string }>;
+
+interface CertificatePreviewModalProps {
+    registrationId: string;
+    name: string;
+    cache: React.MutableRefObject<CertCache>;
+    onClose: () => void;
+}
+
+function buildCertFileName(name: string): string {
+    return name
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toUpperCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^A-Z0-9_]/g, '') + '_certificado.pdf';
+}
+
+function CertificatePreviewModal({ registrationId, name, cache, onClose }: CertificatePreviewModalProps) {
+    const fileName = buildCertFileName(name);
+    const hit = cache.current.get(registrationId);
+    const [blobUrl, setBlobUrl] = useState<string | null>(hit?.blobUrl ?? null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (blobUrl) return;
+        let cancelled = false;
+        registrationService.fetchCertificatePdfBlob(registrationId)
+            .then(({ blobUrl: url }) => {
+                if (!cancelled) {
+                    cache.current.set(registrationId, { blobUrl: url, fileName });
+                    setBlobUrl(url);
+                }
+            })
+            .catch((e) => {
+                if (!cancelled) setError(e instanceof Error ? e.message : 'Error al generar el certificado');
+            });
+        return () => { cancelled = true; };
+    }, [registrationId]);
+
+    return (
+        <div className="reg-modal-overlay" onClick={onClose}>
+            <div className="reg-cert-preview-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="reg-modal-header">
+                    <div>
+                        <h3 className="reg-modal-title">Vista previa del certificado</h3>
+                        <p className="reg-modal-sub">{name}</p>
+                    </div>
+                    <button className="reg-modal-close" onClick={onClose} aria-label="Cerrar">
+                        <IconClose />
+                    </button>
+                </div>
+
+                <div className="reg-cert-preview-body">
+                    {!blobUrl && !error && (
+                        <div className="reg-qr-loading">
+                            <span className="reg-qr-spinner" />
+                            <p>Cargando certificado...</p>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="reg-qr-error">
+                            <IconAlert />
+                            <p>{error}</p>
+                        </div>
+                    )}
+                    {blobUrl && (
+                        <iframe
+                            src={blobUrl}
+                            title={`Certificado de ${name}`}
+                            className="reg-cert-preview-iframe"
+                        />
+                    )}
+                </div>
+
+                {blobUrl && (
+                    <div className="reg-modal-footer">
+                        <a
+                            href={blobUrl}
+                            download={fileName}
+                            className="reg-qr-download"
+                        >
+                            Descargar PDF
+                        </a>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ── WhatsApp QR Modal ──────────────────────────────────────────────────────────
 
 interface WhatsAppModalProps {
@@ -765,6 +864,15 @@ export default function RegistrationsPage() {
     const [whatsappModal, setWhatsappModal] = useState<{ id: string; name: string; phone: string } | null>(null);
     const [addModal, setAddModal] = useState(false);
     const [allStatuses, setAllStatuses] = useState<RegistrationStatus[]>([]);
+    const [certPreviewModal, setCertPreviewModal] = useState<{ id: string; name: string } | null>(null);
+    const [filterCertEligible, setFilterCertEligible] = useState(false);
+    const certCacheRef = useRef<CertCache>(new Map());
+
+    // Revoke all cached blob URLs when the page unmounts.
+    useEffect(() => {
+        const cache = certCacheRef.current;
+        return () => { cache.forEach(({ blobUrl }) => URL.revokeObjectURL(blobUrl)); };
+    }, []);
 
     useEffect(() => {
         registrationStatusService
@@ -778,6 +886,8 @@ export default function RegistrationsPage() {
         return () => clearTimeout(t);
     }, [search]);
 
+    useEffect(() => { setPage(1); }, [filterCertEligible]);
+
     const fetchData = useCallback(async (targetPage: number) => {
         setLoading(true);
         setError(null);
@@ -786,6 +896,7 @@ export default function RegistrationsPage() {
                 page: targetPage,
                 size_page: pageSize,
                 searchvalue: activeSearch.trim() || undefined,
+                min_workshops: filterCertEligible ? 4 : undefined,
             });
             setRows(res.data ?? []);
             setPagination(res.pagination ?? null);
@@ -794,7 +905,7 @@ export default function RegistrationsPage() {
         } finally {
             setLoading(false);
         }
-    }, [pageSize, activeSearch]);
+    }, [pageSize, activeSearch, filterCertEligible]);
 
     const { connected: mqttConnected } = useMqttRegistrations(() => fetchData(page));
 
@@ -815,6 +926,10 @@ export default function RegistrationsPage() {
         ));
     };
 
+    const handleDownloadCertificate = (id: string, name: string) => {
+        setCertPreviewModal({ id, name });
+    };
+
     const totalPages = Math.max(pagination?.last_page ?? 1, 1);
 
     const handlePage = (p: number) => {
@@ -831,7 +946,7 @@ export default function RegistrationsPage() {
         return pages;
     };
 
-    const COLS = 10;
+    const COLS = 12;
 
     return (
         <DashboardLayout title="Inscripciones">
@@ -856,6 +971,14 @@ export default function RegistrationsPage() {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+                    <label className="reg-filter-toggle" title="Mostrar solo inscritos con 4 o más talleres asistidos">
+                        <input
+                            type="checkbox"
+                            checked={filterCertEligible}
+                            onChange={(e) => setFilterCertEligible(e.target.checked)}
+                        />
+                        <span>4+ talleres</span>
+                    </label>
                     <button className="reg-add-btn" onClick={() => setAddModal(true)}>
                         <IconPlus />
                         Agregar
@@ -898,7 +1021,8 @@ export default function RegistrationsPage() {
                                 <th>Registrado por</th>
                                 <th>Fecha</th>
                                 <th>Teléfono</th>
-                                <th>QR WhatsApp</th>
+                                {/*<th>QR WhatsApp</th>*/}
+                                <th>Talleres</th>
                                 <th>Certificado</th>
                                 <th>QR</th>
                             </tr>
@@ -1000,35 +1124,51 @@ export default function RegistrationsPage() {
                                             {/*        <span className="reg-send-badge">Deshabilitado por ahora</span>*/}
                                             {/*    )}*/}
                                             {/*</td>*/}
-                                            <td>
-                                                {b.type_document.abbreviated_description=='DNI'?(
-                                                    reg.send_qr ? (
-                                                        <button
-                                                            className="reg-send-badge reg-send-badge--sent"
-                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}
-                                                            title="Reenviar QR por WhatsApp"
-                                                        >
-                                                            <IconWhatsApp />Enviado
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            className="reg-send-badge reg-send-badge--pending"
-                                                            onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}
-                                                            title="Enviar QR por WhatsApp"
-                                                        >
-                                                            <IconWhatsApp />
-                                                            No enviado
-                                                        </button>
-                                                    )
-                                                ):(
-                                                    <span className="reg-send-badge">Deshabilitado por ahora</span>
-                                                )}
+
+                                            {/*<td>*/}
+                                            {/*    {b.type_document.abbreviated_description=='DNI'?(*/}
+                                            {/*        reg.send_qr ? (*/}
+                                            {/*            <button*/}
+                                            {/*                className="reg-send-badge reg-send-badge--sent"*/}
+                                            {/*                onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}*/}
+                                            {/*                title="Reenviar QR por WhatsApp"*/}
+                                            {/*            >*/}
+                                            {/*                <IconWhatsApp />Enviado*/}
+                                            {/*            </button>*/}
+                                            {/*        ) : (*/}
+                                            {/*            <button*/}
+                                            {/*                className="reg-send-badge reg-send-badge--pending"*/}
+                                            {/*                onClick={() => setWhatsappModal({ id: reg.id, name, phone: b.phone ? "51" + b.phone : '' })}*/}
+                                            {/*                title="Enviar QR por WhatsApp"*/}
+                                            {/*            >*/}
+                                            {/*                <IconWhatsApp />*/}
+                                            {/*                No enviado*/}
+                                            {/*            </button>*/}
+                                            {/*        )*/}
+                                            {/*    ):(*/}
+                                            {/*        <span className="reg-send-badge">Deshabilitado por ahora</span>*/}
+                                            {/*    )}*/}
+                                            {/*</td>*/}
+                                            <td style={{ textAlign: 'center' }}>
+                                                <span className={`reg-workshops-badge reg-workshops-badge--${reg.workshops_attended >= 4 ? 'complete' : 'incomplete'}`}>
+                                                    {reg.workshops_attended}/4
+                                                </span>
                                             </td>
                                             <td>
-                                                {reg.send_certificate ? (
-                                                    <span className="reg-send-badge reg-send-badge--sent">Enviado</span>
+                                                {reg.workshops_attended >= 4 ? (
+                                                    <button
+                                                        className="reg-cert-btn"
+                                                        onClick={() => handleDownloadCertificate(reg.id, name)}
+                                                        disabled={certPreviewModal !== null}
+                                                        title={`Ver certificado de ${name}`}
+                                                    >
+                                                        <IconCertificate />
+                                                        Ver
+                                                    </button>
                                                 ) : (
-                                                    <span className="reg-send-badge reg-send-badge--no">No enviado</span>
+                                                    <span className="reg-cert-locked" title={`Asistió a ${reg.workshops_attended} de 4 talleres requeridos`}>
+                                                        —
+                                                    </span>
                                                 )}
                                             </td>
                                             <td>
@@ -1087,6 +1227,16 @@ export default function RegistrationsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Certificate Preview Modal */}
+            {certPreviewModal && (
+                <CertificatePreviewModal
+                    registrationId={certPreviewModal.id}
+                    name={certPreviewModal.name}
+                    cache={certCacheRef}
+                    onClose={() => setCertPreviewModal(null)}
+                />
+            )}
 
             {/* QR Modal */}
             {qrModal && (

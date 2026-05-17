@@ -121,6 +121,42 @@
 }
 
 /* ── Add button ──────────────────────────────────────────────────────────────── */
+.reg-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid var(--reg-divider);
+    border-radius: 8px;
+    background: var(--reg-card-bg);
+    color: var(--reg-text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.reg-filter-toggle input[type="checkbox"] {
+    accent-color: #0284c7;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.reg-filter-toggle:has(input:checked) {
+    border-color: #0284c7;
+    color: #0284c7;
+    background: #eff6ff;
+}
+
+[data-theme="dark"] .reg-filter-toggle:has(input:checked) {
+    border-color: #1d4ed8;
+    color: #60a5fa;
+    background: #0c1a2e;
+}
+
 .reg-add-btn {
     display: flex;
     align-items: center;
@@ -1117,6 +1153,136 @@
     font-size: 11px;
     color: var(--reg-text-muted);
     margin-top: 2px;
+}
+
+/* ── Certificate button ──────────────────────────────────────────────────────── */
+.reg-workshops-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.reg-workshops-badge--complete {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.reg-workshops-badge--incomplete {
+    background: #fef9c3;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+[data-theme="dark"] .reg-workshops-badge--complete {
+    background: #052e16;
+    color: #4ade80;
+    border-color: #166534;
+}
+
+[data-theme="dark"] .reg-workshops-badge--incomplete {
+    background: #1c1007;
+    color: #fbbf24;
+    border-color: #713f12;
+}
+
+.reg-cert-locked {
+    color: var(--reg-text-muted);
+    font-size: 14px;
+    display: block;
+    text-align: center;
+}
+
+.reg-cert-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid #fde68a;
+    border-radius: 7px;
+    background: #fef9c3;
+    color: #854d0e;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.reg-cert-btn:hover:not(:disabled) {
+    background: #ca8a04;
+    color: #ffffff;
+    border-color: #ca8a04;
+}
+
+.reg-cert-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+[data-theme="dark"] .reg-cert-btn {
+    background: #292202;
+    border-color: #713f12;
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .reg-cert-btn:hover:not(:disabled) {
+    background: #b45309;
+    color: #ffffff;
+    border-color: #b45309;
+}
+
+.reg-cert-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(133, 77, 14, 0.25);
+    border-top-color: #854d0e;
+    border-radius: 50%;
+    animation: reg-spin 0.7s linear infinite;
+    display: block;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .reg-cert-spinner {
+    border-color: rgba(251, 191, 36, 0.25);
+    border-top-color: #fbbf24;
+}
+
+/* ── Certificate Preview Modal ───────────────────────────────────────────────── */
+.reg-cert-preview-modal {
+    background: var(--reg-card-bg);
+    border: 1px solid var(--reg-card-border);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    width: min(92vw, 980px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: reg-modal-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+.reg-cert-preview-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e7eb;
+    min-height: 480px;
+}
+
+[data-theme="dark"] .reg-cert-preview-body {
+    background: #1a1a1a;
+}
+
+.reg-cert-preview-iframe {
+    width: 100%;
+    height: 560px;
+    border: none;
+    display: block;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
